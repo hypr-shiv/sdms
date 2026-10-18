@@ -12,6 +12,8 @@ import {
   RefreshCw,
   Sparkles,
   ShieldCheck,
+  ShieldAlert,
+  Clock,
   Edit2,
   X,
 } from "lucide-react";
