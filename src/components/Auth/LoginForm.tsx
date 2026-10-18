@@ -15,6 +15,8 @@ import {
   IdCard,
   AlertCircle,
   X,
+  ShieldAlert,
+  Clock,
 } from "lucide-react";
 
 type Role = "student" | "teacher" | "admin";
@@ -86,11 +88,21 @@ export default function LoginForm({
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [rateLimitCooldown, setRateLimitCooldown] = useState(0);
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [userIdError, setUserIdError] = useState("");
   const [globalError, setGlobalError] = useState("");
   const [globalSuccess, setGlobalSuccess] = useState(loggedOutNotice || "");
+
+  // Rate limit cooldown countdown
+  useEffect(() => {
+    if (rateLimitCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setRateLimitCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [rateLimitCooldown]);
 
   const config = ROLE_CONFIG[activeRole];
 
@@ -222,7 +234,11 @@ export default function LoginForm({
               ? data.message[0]
               : data.error || "Login failed. Please check your credentials.";
 
-          if (res.status === 401 || rawMsg.toLowerCase().includes("invalid credentials") || rawMsg.toLowerCase().includes("unauthorized")) {
+          if (res.status === 429) {
+            const retry = Number(data.retryAfter || res.headers.get("Retry-After")) || 60;
+            setRateLimitCooldown(retry);
+            setGlobalError(rawMsg);
+          } else if (res.status === 401 || rawMsg.toLowerCase().includes("invalid credentials") || rawMsg.toLowerCase().includes("unauthorized")) {
             setGlobalError("Invalid email or password. Please verify your credentials or click a Quick Demo role above.");
           } else if (res.status === 404 || rawMsg.toLowerCase().includes("not found")) {
             setGlobalError("Account not found. Please create a new account or select a Quick Demo role above.");
@@ -448,6 +464,30 @@ export default function LoginForm({
         </button>
       </div>
 
+      {/* ─── Rate Limit Cooldown Warning ─── */}
+      {rateLimitCooldown > 0 && (
+        <div className="auth-rate-limit-card" role="alert">
+          <div className="auth-rate-limit-header">
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 600 }}>
+              <ShieldAlert size={18} color="#fbbf24" />
+              <span>Security Rate Limit Active</span>
+            </div>
+            <span className="auth-rate-limit-badge">
+              <Clock size={12} /> {rateLimitCooldown}s
+            </span>
+          </div>
+          <div className="auth-rate-limit-body">
+            Too many consecutive attempts detected. Access is temporarily paused for <strong>{rateLimitCooldown} seconds</strong> to protect institutional accounts.
+          </div>
+          <div className="auth-rate-limit-bar">
+            <div
+              className="auth-rate-limit-bar-fill"
+              style={{ width: `${Math.min(100, (rateLimitCooldown / 60) * 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* ─── Alert Banner ─── */}
       {globalError && (
         <div className="auth-alert error">
@@ -660,18 +700,22 @@ export default function LoginForm({
           id="login-submit"
           type="submit"
           className={`btn-primary ${config.btnClass}`}
-          disabled={isLoading}
+          disabled={isLoading || rateLimitCooldown > 0}
           style={{
             marginTop: 4,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             gap: 8,
-            opacity: isLoading ? 0.7 : 1,
-            cursor: isLoading ? "not-allowed" : "pointer",
+            opacity: isLoading || rateLimitCooldown > 0 ? 0.65 : 1,
+            cursor: isLoading || rateLimitCooldown > 0 ? "not-allowed" : "pointer",
           }}
         >
-          {isLoading ? (
+          {rateLimitCooldown > 0 ? (
+            <>
+              <Clock size={16} /> Cooldown Active ({rateLimitCooldown}s)
+            </>
+          ) : isLoading ? (
             <div
               style={{
                 width: 20,

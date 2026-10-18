@@ -17,6 +17,8 @@ import {
   AlertCircle,
   Check,
   X,
+  ShieldAlert,
+  Clock,
 } from "lucide-react";
 
 type Role = "student" | "teacher" | "admin";
@@ -91,6 +93,7 @@ export default function SignUpForm({ onSwitchToLogin, onRoleChange, onSwitchToVe
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [rateLimitCooldown, setRateLimitCooldown] = useState(0);
   const [nameError, setNameError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [userIdError, setUserIdError] = useState("");
@@ -99,6 +102,15 @@ export default function SignUpForm({ onSwitchToLogin, onRoleChange, onSwitchToVe
   const [termsError, setTermsError] = useState("");
   const [globalError, setGlobalError] = useState("");
   const [globalSuccess, setGlobalSuccess] = useState("");
+
+  // Rate limit cooldown countdown
+  useEffect(() => {
+    if (rateLimitCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setRateLimitCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [rateLimitCooldown]);
 
   const config = ROLE_CONFIG[activeRole];
 
@@ -320,7 +332,13 @@ export default function SignUpForm({ onSwitchToLogin, onRoleChange, onSwitchToVe
 
         const data = await res.json();
         if (!res.ok) {
-          setGlobalError(data.message || "Sign up failed");
+          if (res.status === 429) {
+            const retry = Number(data.retryAfter || res.headers.get("Retry-After")) || 60;
+            setRateLimitCooldown(retry);
+            setGlobalError(data.message || `Too many requests. Please wait ${retry}s.`);
+          } else {
+            setGlobalError(data.message || "Sign up failed");
+          }
           return;
         }
 
@@ -439,6 +457,30 @@ export default function SignUpForm({ onSwitchToLogin, onRoleChange, onSwitchToVe
           </button>
         ))}
       </div>
+
+      {/* ─── Rate Limit Cooldown Warning ─── */}
+      {rateLimitCooldown > 0 && (
+        <div className="auth-rate-limit-card" role="alert">
+          <div className="auth-rate-limit-header">
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 600 }}>
+              <ShieldAlert size={18} color="#fbbf24" />
+              <span>Security Rate Limit Active</span>
+            </div>
+            <span className="auth-rate-limit-badge">
+              <Clock size={12} /> {rateLimitCooldown}s
+            </span>
+          </div>
+          <div className="auth-rate-limit-body">
+            Registration limit reached. Please wait <strong>{rateLimitCooldown} seconds</strong> before submitting again.
+          </div>
+          <div className="auth-rate-limit-bar">
+            <div
+              className="auth-rate-limit-bar-fill"
+              style={{ width: `${Math.min(100, (rateLimitCooldown / 60) * 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* ─── Alert Banner ─── */}
       {globalError && (
@@ -746,18 +788,22 @@ export default function SignUpForm({ onSwitchToLogin, onRoleChange, onSwitchToVe
           id="signup-submit"
           type="submit"
           className={`btn-primary ${config.btnClass}`}
-          disabled={isLoading}
+          disabled={isLoading || rateLimitCooldown > 0}
           style={{
             marginTop: 4,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             gap: 8,
-            opacity: isLoading ? 0.7 : 1,
-            cursor: isLoading ? "not-allowed" : "pointer",
+            opacity: isLoading || rateLimitCooldown > 0 ? 0.65 : 1,
+            cursor: isLoading || rateLimitCooldown > 0 ? "not-allowed" : "pointer",
           }}
         >
-          {isLoading ? (
+          {rateLimitCooldown > 0 ? (
+            <>
+              <Clock size={16} /> Cooldown Active ({rateLimitCooldown}s)
+            </>
+          ) : isLoading ? (
             <div
               style={{
                 width: 20,
