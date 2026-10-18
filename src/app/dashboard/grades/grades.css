@@ -1,0 +1,887 @@
+/* ══════════════════════════════════════════════════════════════
+   ScholarPulse — Gradebook & Report Cards (FR-ASSIGN-02)
+   Aesthetic: Nixtio HR Neo-Brutalist Soft UI / Glassmorphism
+   ══════════════════════════════════════════════════════════════ */
+
+.gradebook-container {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  animation: gbFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes gbFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Hero / Header ─── */
+.gradebook-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.gradebook-hero h1 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.gradebook-hero p {
+  color: var(--text-secondary);
+  margin: 4px 0 0;
+  font-size: 0.95rem;
+}
+
+.gradebook-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ─── GPA Gauge (SVG Donut) ─── */
+.gpa-gauge-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  position: relative;
+}
+
+.gpa-gauge-svg {
+  transform: rotate(-90deg);
+}
+
+.gpa-gauge-track {
+  fill: none;
+  stroke: rgba(0, 0, 0, 0.06);
+}
+
+.gpa-gauge-fill {
+  fill: none;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gpa-gauge-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.gpa-gauge-value {
+  font-size: 2.4rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.gpa-gauge-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+/* ─── GPA Cards Row ─── */
+.gpa-cards-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.gpa-stat-card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  padding: 20px 24px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.gpa-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.08);
+}
+
+.gpa-stat-card .stat-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.gpa-stat-card .stat-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.gpa-stat-card .stat-sub {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+/* ─── GPA Scale Toggle ─── */
+.scale-toggle {
+  display: inline-flex;
+  background: rgba(0, 0, 0, 0.04);
+  padding: 3px;
+  border-radius: 999px;
+  gap: 2px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.scale-toggle button {
+  padding: 5px 14px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  transition: all 0.2s ease;
+}
+
+.scale-toggle button.active {
+  background: #FFFFFF;
+  color: var(--text-primary);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* ─── Category Breakdown Bars ─── */
+.category-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.category-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.category-label {
+  width: 110px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.category-bar-track {
+  flex: 1;
+  height: 10px;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.category-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.category-bar-fill.assignments { background: linear-gradient(135deg, #6366f1, #818cf8); }
+.category-bar-fill.midterm     { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+.category-bar-fill.final       { background: linear-gradient(135deg, #ef4444, #f87171); }
+.category-bar-fill.participation { background: linear-gradient(135deg, #10b981, #34d399); }
+.category-bar-fill.quiz        { background: linear-gradient(135deg, #8b5cf6, #a78bfa); }
+
+.category-score {
+  width: 48px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: right;
+}
+
+.category-weight {
+  width: 36px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* ─── Course Grades Table ─── */
+.gradebook-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.gradebook-table th {
+  padding: 14px 16px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.gradebook-table td {
+  padding: 14px 16px;
+  color: var(--text-primary);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+  font-size: 0.9rem;
+}
+
+.gradebook-table tr:hover td {
+  background: rgba(0, 0, 0, 0.01);
+}
+
+.gradebook-table .score-cell {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.gradebook-table .score-cell input {
+  width: 56px;
+  padding: 5px 6px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  text-align: center;
+  background: #F4F4F5;
+  transition: all 0.2s ease;
+}
+
+.gradebook-table .score-cell input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  background: #FFF;
+  box-shadow: 0 0 0 2px rgba(244, 197, 66, 0.2);
+}
+
+/* ─── Letter Grade Badge ─── */
+.grade-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+}
+
+.grade-a  { background: #dcfce7; color: #166534; }
+.grade-b  { background: #e0f2fe; color: #0c4a6e; }
+.grade-c  { background: #fef9c3; color: #854d0e; }
+.grade-d  { background: #fed7aa; color: #9a3412; }
+.grade-f  { background: #fee2e2; color: #991b1b; }
+
+/* ─── Status Badge ─── */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-badge.draft     { background: #f3f4f6; color: #6b7280; }
+.status-badge.published { background: #dbeafe; color: #1d4ed8; }
+.status-badge.finalized { background: #dcfce7; color: #166534; }
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.status-badge.draft .status-dot     { background: #9ca3af; }
+.status-badge.published .status-dot { background: #3b82f6; }
+.status-badge.finalized .status-dot { background: #22c55e; }
+
+/* ─── Weight Slider Panel ─── */
+.weight-config-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 24px;
+  background: #FAFAFA;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.weight-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.weight-label {
+  width: 120px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.weight-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 999px;
+  outline: none;
+  transition: opacity 0.15s ease;
+}
+
+.weight-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+.weight-value {
+  width: 42px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.weight-total {
+  display: flex;
+  justify-content: flex-end;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.weight-total.valid   { color: #16a34a; }
+.weight-total.invalid { color: #dc2626; }
+
+/* ─── Audit Timeline ─── */
+.audit-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 8px 0;
+}
+
+.audit-entry {
+  display: flex;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  animation: gbFadeIn 0.3s ease;
+}
+
+.audit-entry:last-child {
+  border-bottom: none;
+}
+
+.audit-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #F4F4F5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.85rem;
+}
+
+.audit-content {
+  flex: 1;
+}
+
+.audit-content .audit-title {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.audit-content .audit-detail {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.audit-diff {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.audit-diff .old-val {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 1px 6px;
+  border-radius: 4px;
+  text-decoration: line-through;
+}
+
+.audit-diff .new-val {
+  background: #dcfce7;
+  color: #166534;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.audit-diff .arrow {
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+}
+
+.audit-timestamp {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* ─── Report Card Print Styles ─── */
+.report-card-print {
+  background: #FFFFFF;
+  border-radius: 16px;
+  padding: 40px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.06);
+}
+
+.report-header {
+  text-align: center;
+  border-bottom: 3px double #1a1a1a;
+  padding-bottom: 20px;
+  margin-bottom: 24px;
+}
+
+.report-header .institution {
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  text-transform: uppercase;
+}
+
+.report-header .department {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.report-header .doc-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 12px;
+  color: var(--text-primary);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.report-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 24px;
+  font-size: 0.88rem;
+}
+
+.report-meta .meta-item {
+  display: flex;
+  gap: 8px;
+}
+
+.report-meta .meta-label {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.report-meta .meta-value {
+  color: var(--text-secondary);
+}
+
+.report-card-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 24px;
+}
+
+.report-card-table th,
+.report-card-table td {
+  padding: 10px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  font-size: 0.85rem;
+}
+
+.report-card-table th {
+  background: #F4F4F5;
+  font-weight: 600;
+  text-align: left;
+}
+
+.report-card-table td {
+  text-align: center;
+}
+
+.report-card-table td:first-child,
+.report-card-table td:nth-child(2) {
+  text-align: left;
+}
+
+.report-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding: 20px;
+  background: #F9FAFB;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.report-summary-item {
+  text-align: center;
+}
+
+.report-summary-item .label {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.report-summary-item .value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 2px;
+}
+
+.report-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.report-stamp {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* ─── Action Buttons ─── */
+.gb-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #FFFFFF;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gb-btn:hover {
+  background: #F4F4F5;
+  border-color: rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.gb-btn.primary {
+  background: var(--text-primary);
+  color: #FFFFFF;
+  border-color: var(--text-primary);
+}
+
+.gb-btn.primary:hover {
+  opacity: 0.9;
+  background: var(--text-primary);
+}
+
+.gb-btn.success {
+  background: #16a34a;
+  color: #FFFFFF;
+  border-color: #16a34a;
+}
+
+.gb-btn.danger {
+  background: #dc2626;
+  color: #FFFFFF;
+  border-color: #dc2626;
+}
+
+.gb-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ─── Section Cards ─── */
+.gb-card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.04);
+}
+
+.gb-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.gb-card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+/* ─── Semester Trend Chart ─── */
+.semester-trend {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  height: 120px;
+  padding: 0 8px;
+}
+
+.trend-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.trend-bar {
+  width: 100%;
+  max-width: 48px;
+  border-radius: 8px 8px 0 0;
+  transition: height 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.trend-bar.current  { background: linear-gradient(180deg, #6366f1, #818cf8); }
+.trend-bar.past     { background: linear-gradient(180deg, #d1d5db, #e5e7eb); }
+
+.trend-label {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.trend-value {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* ─── Admin Analytics Grid ─── */
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.analytics-card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.04);
+  text-align: center;
+}
+
+.analytics-card .a-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+}
+
+.analytics-card .a-label {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+/* ─── Dark Mode ─── */
+[data-theme="dark"] .gb-card,
+[data-theme="dark"] .gpa-stat-card,
+[data-theme="dark"] .analytics-card {
+  background: #1e1e2e;
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .gradebook-table th {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .gradebook-table td {
+  border-bottom-color: rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="dark"] .gradebook-table tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+[data-theme="dark"] .gradebook-table .score-cell input {
+  background: #2a2a3e;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+[data-theme="dark"] .weight-config-panel {
+  background: #1a1a2e;
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .report-card-print {
+  background: #1e1e2e;
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .report-card-table th {
+  background: #2a2a3e;
+}
+
+[data-theme="dark"] .report-card-table th,
+[data-theme="dark"] .report-card-table td {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .report-summary {
+  background: #1a1a2e;
+}
+
+[data-theme="dark"] .gb-btn {
+  background: #2a2a3e;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #e4e4e7;
+}
+
+[data-theme="dark"] .gb-btn:hover {
+  background: #333346;
+}
+
+[data-theme="dark"] .category-bar-track {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .gpa-gauge-track {
+  stroke: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .scale-toggle {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .scale-toggle button {
+  color: #a1a1aa;
+}
+
+[data-theme="dark"] .scale-toggle button.active {
+  background: #2a2a3e;
+  color: #e4e4e7;
+}
+
+[data-theme="dark"] .audit-icon {
+  background: #2a2a3e;
+}
+
+/* ─── Print Styles ─── */
+@media print {
+  .dashboard-header,
+  .dashboard-layout > aside,
+  .gradebook-hero-actions,
+  .gb-btn,
+  .scale-toggle {
+    display: none !important;
+  }
+
+  .gradebook-container {
+    max-width: 100%;
+    padding: 0;
+  }
+
+  .report-card-print {
+    box-shadow: none;
+    border: none;
+    padding: 20px;
+  }
+
+  .report-card-table th,
+  .report-card-table td {
+    border-color: #000 !important;
+  }
+
+  .report-header {
+    border-bottom-color: #000;
+  }
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+  .gradebook-hero {
+    flex-direction: column;
+  }
+
+  .gpa-cards-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .report-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .report-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}

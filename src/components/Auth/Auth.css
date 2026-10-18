@@ -1,0 +1,523 @@
+/* ══════════════════════════════════════════════════════════════
+   Auth Page — Full-Screen Video BG + Floating Form
+   ══════════════════════════════════════════════════════════════ */
+
+/* ─── Page Container ─── */
+.auth-page {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #0a0a0f;
+}
+
+/* ─── Loading State ─── */
+.auth-loading {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a0a0f;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(99, 102, 241, 0.2);
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.auth-loading-text {
+  color: #6b6b80;
+  font-size: 0.85rem;
+}
+
+/* ─── Full-Screen Video Background ─── */
+.auth-video-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.auth-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Dark gradient overlay — makes text/form readable over the video */
+.auth-video-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(
+      to right,
+      rgba(6, 6, 12, 0.92) 0%,
+      rgba(6, 6, 12, 0.78) 30%,
+      rgba(6, 6, 12, 0.45) 55%,
+      rgba(6, 6, 12, 0.15) 75%,
+      rgba(6, 6, 12, 0.05) 100%
+    );
+  pointer-events: none;
+}
+
+/* Vignette for depth */
+.auth-video-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: radial-gradient(
+    ellipse at 70% 50%,
+    transparent 30%,
+    rgba(6, 6, 12, 0.25) 70%,
+    rgba(6, 6, 12, 0.6) 100%
+  );
+  pointer-events: none;
+}
+
+/* ─── Floating Particles ─── */
+.auth-particles {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0;
+  animation: floatParticle 12s ease-in-out infinite;
+}
+
+.particle-1 {
+  width: 4px;
+  height: 4px;
+  background: rgba(99, 102, 241, 0.5);
+  left: 10%;
+  top: 20%;
+  animation-delay: 0s;
+  animation-duration: 14s;
+}
+
+.particle-2 {
+  width: 3px;
+  height: 3px;
+  background: rgba(139, 92, 246, 0.4);
+  left: 25%;
+  top: 70%;
+  animation-delay: 2s;
+  animation-duration: 11s;
+}
+
+.particle-3 {
+  width: 5px;
+  height: 5px;
+  background: rgba(236, 72, 153, 0.3);
+  left: 45%;
+  top: 15%;
+  animation-delay: 4s;
+  animation-duration: 16s;
+}
+
+.particle-4 {
+  width: 3px;
+  height: 3px;
+  background: rgba(99, 102, 241, 0.35);
+  left: 35%;
+  top: 85%;
+  animation-delay: 6s;
+  animation-duration: 13s;
+}
+
+.particle-5 {
+  width: 4px;
+  height: 4px;
+  background: rgba(139, 92, 246, 0.3);
+  left: 15%;
+  top: 50%;
+  animation-delay: 8s;
+  animation-duration: 15s;
+}
+
+@keyframes floatParticle {
+  0% {
+    opacity: 0;
+    transform: translateY(0) translateX(0);
+  }
+  15% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0.4;
+    transform: translateY(-60px) translateX(30px);
+  }
+  85% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-120px) translateX(-20px);
+  }
+}
+
+/* ─── Form Container — Left-Aligned Overlay ─── */
+.auth-form-container {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 24px 48px;
+  overflow-y: auto;
+}
+
+.auth-form-inner {
+  width: 100%;
+  max-width: 460px;
+  margin-left: 2%;
+}
+
+/* ─── Form Card (Premium Dark Glassmorphism) ─── */
+.auth-card {
+  background: rgba(8, 8, 14, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(40px) saturate(1.4);
+  -webkit-backdrop-filter: blur(40px) saturate(1.4);
+  padding: 38px 34px 34px;
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.03) inset,
+    0 20px 60px -10px rgba(0, 0, 0, 0.65),
+    0 0 1px 0 rgba(0, 0, 0, 0.5),
+    0 0 120px -40px rgba(99, 60, 180, 0.06);
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.auth-card:hover {
+  background: rgba(10, 10, 18, 0.82);
+  border-color: rgba(255, 255, 255, 0.07);
+  border-top-color: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.04) inset,
+    0 25px 70px -10px rgba(0, 0, 0, 0.7),
+    0 0 1px 0 rgba(0, 0, 0, 0.5),
+    0 0 140px -40px rgba(99, 60, 180, 0.08);
+  transform: translateY(-2px);
+}
+
+/* ─── Mode Transition ─── */
+.form-enter {
+  animation: formSlideIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes formSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ─── Validation Error ─── */
+.field-error {
+  color: #f87171;
+  font-size: 0.75rem;
+  margin-top: 6px;
+  padding-left: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  animation: slideDown 0.25s ease forwards;
+}
+
+.field-error svg {
+  flex-shrink: 0;
+}
+
+/* ─── Success Message ─── */
+.field-success {
+  color: #34d399;
+  font-size: 0.75rem;
+  margin-top: 6px;
+  padding-left: 4px;
+}
+
+/* ─── Password Strength Indicator ─── */
+.password-strength {
+  margin-top: 10px;
+}
+
+.strength-bar-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.strength-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1), background 0.35s ease;
+}
+
+.strength-bar-fill.strength-weak {
+  width: 25%;
+  background: #f87171;
+}
+
+.strength-bar-fill.strength-fair {
+  width: 50%;
+  background: #fbbf24;
+}
+
+.strength-bar-fill.strength-good {
+  width: 75%;
+  background: #60a5fa;
+}
+
+.strength-bar-fill.strength-strong {
+  width: 100%;
+  background: #34d399;
+}
+
+.strength-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.strength-label span {
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+}
+
+.strength-text {
+  font-weight: 500;
+}
+
+.strength-text.strength-weak { color: #f87171; }
+.strength-text.strength-fair { color: #fbbf24; }
+.strength-text.strength-good { color: #60a5fa; }
+.strength-text.strength-strong { color: #34d399; }
+
+/* ─── Password Requirements Checklist ─── */
+.password-requirements {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+  margin-top: 10px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.requirement {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+}
+
+.requirement.met {
+  color: #34d399;
+}
+
+.requirement-icon {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  background: transparent;
+}
+
+.requirement.met .requirement-icon {
+  border-color: #34d399;
+  background: rgba(52, 211, 153, 0.15);
+}
+
+/* ─── Auth Mode Toggle Link ─── */
+.auth-toggle {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: var(--font-sans);
+  font-size: inherit;
+  padding: 0;
+}
+
+.auth-toggle:hover {
+  color: var(--text-primary);
+}
+
+/* ─── Global Alert Banner ─── */
+.auth-alert {
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.813rem;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  animation: slideDown 0.3s ease forwards;
+  position: relative;
+}
+
+.auth-alert.error {
+  background: rgba(248, 113, 113, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.25);
+  color: #fca5a5;
+}
+
+.auth-alert.success {
+  background: rgba(52, 211, 153, 0.08);
+  border: 1px solid rgba(52, 211, 153, 0.25);
+  color: #6ee7b7;
+}
+
+.auth-alert-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1;
+}
+
+.auth-alert-content svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.auth-alert-text {
+  flex: 1;
+  line-height: 1.45;
+}
+
+.auth-alert-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.auth-alert-action-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.auth-alert-dismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: currentColor;
+  opacity: 0.7;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  margin-top: -2px;
+  margin-right: -2px;
+  transition: all 0.2s ease;
+}
+
+.auth-alert-dismiss:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.08);
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 1024px) {
+  .auth-form-container {
+    padding: 24px 32px;
+  }
+
+  .auth-form-inner {
+    max-width: 420px;
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .auth-video-overlay {
+    background:
+      linear-gradient(
+        to bottom,
+        rgba(6, 6, 12, 0.5) 0%,
+        rgba(6, 6, 12, 0.85) 40%,
+        rgba(6, 6, 12, 0.95) 100%
+      );
+  }
+
+  .auth-form-container {
+    align-items: flex-end;
+    justify-content: center;
+    padding: 16px;
+    padding-bottom: 24px;
+  }
+
+  .auth-form-inner {
+    max-width: 100%;
+    margin-left: 0;
+  }
+
+  .auth-card {
+    padding: 28px 24px 24px;
+    background: rgba(8, 8, 14, 0.88);
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 24px 18px 20px;
+  }
+
+  .password-requirements {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-form-container {
+    padding: 12px;
+    padding-bottom: 16px;
+  }
+}

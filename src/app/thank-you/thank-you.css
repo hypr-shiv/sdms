@@ -1,0 +1,123 @@
+/* ══════════════════════════════════════════════════════════════
+   Thank You Page Styles
+   ══════════════════════════════════════════════════════════════ */
+
+.thankyou-page-container {
+  background-color: #0b132b;
+  color: #ffffff;
+  font-family: var(--font-inter), sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.thankyou-background {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.08) 0%, transparent 60%);
+  z-index: 0;
+}
+
+.thankyou-content {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  max-width: 650px;
+  padding: 3rem;
+  background: rgba(11, 19, 43, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.thankyou-icon-wrapper {
+  width: 90px;
+  height: 90px;
+  margin: 0 auto 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(212, 175, 55, 0.1);
+  color: #d4af37;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.thankyou-heading {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.thankyou-message {
+  font-size: 1.15rem;
+  color: #94a3b8;
+  line-height: 1.6;
+  margin-bottom: 2.5rem;
+}
+
+.thankyou-actions {
+  display: flex;
+  gap: 1.25rem;
+  justify-content: center;
+}
+
+.btn-thankyou-primary {
+  background: #d4af37;
+  color: #0b132b;
+  padding: 1rem 2.5rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 14px rgba(212, 175, 55, 0.2);
+}
+
+.btn-thankyou-primary:hover {
+  transform: translateY(-2px);
+  background: #e6c555;
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.3);
+}
+
+.btn-thankyou-secondary {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  padding: 1rem 2.5rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.btn-thankyou-secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+@media (max-width: 640px) {
+  .thankyou-content {
+    padding: 2rem;
+    margin: 1rem;
+  }
+  .thankyou-actions {
+    flex-direction: column;
+  }
+  .btn-thankyou-primary, .btn-thankyou-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+}
