@@ -44,6 +44,7 @@ export default function VerifyEmailForm({
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const [rateLimitCooldown, setRateLimitCooldown] = useState(0);
   const [emailError, setEmailError] = useState("");
   const [codeError, setCodeError] = useState("");
   const [globalError, setGlobalError] = useState("");
@@ -67,6 +68,15 @@ export default function VerifyEmailForm({
     }, 1000);
     return () => clearInterval(interval);
   }, [cooldown]);
+
+  // Handle rate limit cooldown countdown
+  useEffect(() => {
+    if (rateLimitCooldown <= 0) return;
+    const interval = setInterval(() => {
+      setRateLimitCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [rateLimitCooldown]);
 
   // Quick switch demo email helper
   const handleSetDemoEmail = (demoEmail: string) => {
@@ -184,6 +194,12 @@ export default function VerifyEmailForm({
       const data = await res.json();
       if (!res.ok) {
         const rawMsg = data.message || "Failed to resend code.";
+        if (res.status === 429) {
+          const retry = Number(data.retryAfter || res.headers?.get("Retry-After")) || 60;
+          setRateLimitCooldown(retry);
+          setGlobalError(rawMsg);
+          return;
+        }
         if (res.status === 404 || rawMsg.toLowerCase().includes("not found")) {
           setGlobalError(
             `No registered account found for "${cleanEmail}". Check for typos or use our demo student: student@scholarpulse.edu.`
@@ -265,7 +281,12 @@ export default function VerifyEmailForm({
               ? data.message[0]
               : "Verification failed. Please double-check your code.";
 
-          if (res.status === 404 || rawMsg.toLowerCase().includes("not found")) {
+          if (res.status === 429) {
+            const retry = Number(data.retryAfter || res.headers?.get("Retry-After")) || 60;
+            setRateLimitCooldown(retry);
+            setGlobalError(rawMsg);
+            return;
+          } else if (res.status === 404 || rawMsg.toLowerCase().includes("not found")) {
             setGlobalError(
               `No account found for "${cleanEmail}". Check for typos or switch to demo student account (student@scholarpulse.edu).`
             );
@@ -513,6 +534,31 @@ export default function VerifyEmailForm({
         )}
       </div>
 
+      {/* ─── Rate Limit Cooldown Warning ─── */}
+      {rateLimitCooldown > 0 && (
+        <div className="auth-rate-limit-card" role="alert" style={{ marginBottom: 20 }}>
+          <div className="auth-rate-limit-header">
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 600 }}>
+              <ShieldAlert size={18} color="#fbbf24" />
+              <span>Security Rate Limit Active</span>
+            </div>
+            <span className="auth-rate-limit-badge">
+              <Clock size={12} /> {rateLimitCooldown}s
+            </span>
+          </div>
+          <div className="auth-rate-limit-body">
+            Too many verification attempts detected. Code verification is temporarily paused for{" "}
+            <strong>{rateLimitCooldown} seconds</strong> to protect institutional security.
+          </div>
+          <div className="auth-rate-limit-bar">
+            <div
+              className="auth-rate-limit-bar-fill"
+              style={{ width: `${Math.min(100, (rateLimitCooldown / 60) * 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* ─── Global Error Banner ─── */}
       {globalError && (
         <div
@@ -676,7 +722,7 @@ export default function VerifyEmailForm({
           {/* ─── Verify Action Button ─── */}
           <button
             type="submit"
-            disabled={isLoading || digits.join("").length !== 6}
+            disabled={isLoading || digits.join("").length !== 6 || rateLimitCooldown > 0}
             className="auth-btn btn-student"
             style={{
               width: "100%",
@@ -688,8 +734,8 @@ export default function VerifyEmailForm({
               gap: 8,
               fontSize: "0.95rem",
               fontWeight: 600,
-              cursor: isLoading || digits.join("").length !== 6 ? "not-allowed" : "pointer",
-              opacity: isLoading || digits.join("").length !== 6 ? 0.6 : 1,
+              cursor: isLoading || digits.join("").length !== 6 || rateLimitCooldown > 0 ? "not-allowed" : "pointer",
+              opacity: isLoading || digits.join("").length !== 6 || rateLimitCooldown > 0 ? 0.6 : 1,
               marginBottom: 16,
             }}
           >
@@ -732,14 +778,14 @@ export default function VerifyEmailForm({
             <span style={{ color: "#94a3b8" }}>Didn't receive the email?</span>
             <button
               type="button"
-              disabled={isResending || cooldown > 0}
+              disabled={isResending || cooldown > 0 || rateLimitCooldown > 0}
               onClick={handleResend}
               style={{
                 background: "transparent",
                 border: "none",
-                color: cooldown > 0 ? "#64748b" : "#818cf8",
+                color: cooldown > 0 || rateLimitCooldown > 0 ? "#64748b" : "#818cf8",
                 fontWeight: 600,
-                cursor: cooldown > 0 || isResending ? "not-allowed" : "pointer",
+                cursor: cooldown > 0 || isResending || rateLimitCooldown > 0 ? "not-allowed" : "pointer",
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 5,

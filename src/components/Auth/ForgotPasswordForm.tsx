@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import {
   Mail,
@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   AlertCircle,
   ShieldAlert,
+  Clock,
   X,
 } from "lucide-react";
 
@@ -44,12 +45,22 @@ export default function ForgotPasswordForm({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [rateLimitCooldown, setRateLimitCooldown] = useState(0);
   const [emailError, setEmailError] = useState("");
   const [codeError, setCodeError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [confirmError, setConfirmError] = useState("");
   const [globalError, setGlobalError] = useState("");
   const [globalSuccess, setGlobalSuccess] = useState("");
+
+  // Rate limit cooldown countdown
+  useEffect(() => {
+    if (rateLimitCooldown <= 0) return;
+    const interval = setInterval(() => {
+      setRateLimitCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [rateLimitCooldown]);
 
   const validateEmail = (value: string): boolean => {
     if (!value) {
@@ -87,6 +98,12 @@ export default function ForgotPasswordForm({
 
         if (!res.ok) {
           const rawMsg = data.message || "Failed to process request. Please try again.";
+          if (res.status === 429) {
+            const retry = Number(data.retryAfter || res.headers?.get("Retry-After")) || 60;
+            setRateLimitCooldown(retry);
+            setGlobalError(rawMsg);
+            return;
+          }
           if (res.status === 404 || rawMsg.toLowerCase().includes("not found")) {
             setGlobalError(`No account registered with "${cleanEmail}". Please check for typos or select a demo account above.`);
           } else {
@@ -180,6 +197,12 @@ export default function ForgotPasswordForm({
               : Array.isArray(data.message)
               ? data.message[0]
               : data.error || "Password reset failed. Please request a new code.";
+          if (res.status === 429) {
+            const retry = Number(data.retryAfter || res.headers?.get("Retry-After")) || 60;
+            setRateLimitCooldown(retry);
+            setGlobalError(errMsg);
+            return;
+          }
           setGlobalError(errMsg);
           return;
         }
@@ -235,6 +258,31 @@ export default function ForgotPasswordForm({
             : `Set a strong new password for ${email}`}
         </p>
       </div>
+
+      {/* ─── Rate Limit Cooldown Warning ─── */}
+      {rateLimitCooldown > 0 && (
+        <div className="auth-rate-limit-card" role="alert" style={{ marginBottom: 16 }}>
+          <div className="auth-rate-limit-header">
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 600 }}>
+              <ShieldAlert size={18} color="#fbbf24" />
+              <span>Security Rate Limit Active</span>
+            </div>
+            <span className="auth-rate-limit-badge">
+              <Clock size={12} /> {rateLimitCooldown}s
+            </span>
+          </div>
+          <div className="auth-rate-limit-body">
+            Too many password reset requests detected. This action is temporarily paused for{" "}
+            <strong>{rateLimitCooldown} seconds</strong> to protect institutional security.
+          </div>
+          <div className="auth-rate-limit-bar">
+            <div
+              className="auth-rate-limit-bar-fill"
+              style={{ width: `${Math.min(100, (rateLimitCooldown / 60) * 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* ─── Alerts ─── */}
       {globalError && (
@@ -382,14 +430,15 @@ export default function ForgotPasswordForm({
           <button
             type="submit"
             className="btn-primary btn-student"
-            disabled={isLoading}
+            disabled={isLoading || rateLimitCooldown > 0}
             style={{
               marginTop: 6,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               gap: 8,
-              cursor: isLoading ? "not-allowed" : "pointer",
+              cursor: isLoading || rateLimitCooldown > 0 ? "not-allowed" : "pointer",
+              opacity: isLoading || rateLimitCooldown > 0 ? 0.6 : 1,
             }}
           >
             {isLoading ? "Generating Reset Code..." : "Continue"}
@@ -558,14 +607,15 @@ export default function ForgotPasswordForm({
           <button
             type="submit"
             className="btn-primary btn-student"
-            disabled={isLoading}
+            disabled={isLoading || rateLimitCooldown > 0}
             style={{
               marginTop: 4,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               gap: 8,
-              cursor: isLoading ? "not-allowed" : "pointer",
+              cursor: isLoading || rateLimitCooldown > 0 ? "not-allowed" : "pointer",
+              opacity: isLoading || rateLimitCooldown > 0 ? 0.6 : 1,
             }}
           >
             {isLoading ? "Updating Password..." : "Update Password"}
