@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   AlertCircle,
   ShieldAlert,
+  X,
 } from "lucide-react";
 
 const EMAIL_REGEX =
@@ -44,6 +45,9 @@ export default function ForgotPasswordForm({
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState("");
+  const [codeError, setCodeError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [confirmError, setConfirmError] = useState("");
   const [globalError, setGlobalError] = useState("");
   const [globalSuccess, setGlobalSuccess] = useState("");
 
@@ -82,7 +86,12 @@ export default function ForgotPasswordForm({
         const data = await res.json();
 
         if (!res.ok) {
-          setGlobalError(data.message || "Failed to process request. Please try again.");
+          const rawMsg = data.message || "Failed to process request. Please try again.";
+          if (res.status === 404 || rawMsg.toLowerCase().includes("not found")) {
+            setGlobalError(`No account registered with "${cleanEmail}". Please check for typos or select a demo account above.`);
+          } else {
+            setGlobalError(rawMsg);
+          }
           return;
         }
 
@@ -111,18 +120,40 @@ export default function ForgotPasswordForm({
       e.preventDefault();
       setGlobalError("");
       setGlobalSuccess("");
+      setCodeError("");
+      setPasswordError("");
+      setConfirmError("");
 
       const cleanEmail = email.trim();
       if (!validateEmail(cleanEmail)) return;
 
+      if (!verificationCode.trim()) {
+        setCodeError("Reset code is required");
+        return;
+      }
+      if (verificationCode.trim().length !== 6) {
+        setCodeError("Reset code must be exactly 6 digits");
+        return;
+      }
+
+      if (!newPassword) {
+        setPasswordError("New password is required");
+        return;
+      }
+
       const allMet = PASSWORD_REQUIREMENTS.every((req) => req.test(newPassword));
       if (!allMet) {
-        setGlobalError("Password does not meet all security requirements");
+        setPasswordError("Password does not meet all security requirements below");
+        return;
+      }
+
+      if (!confirmPassword) {
+        setConfirmError("Please confirm your new password");
         return;
       }
 
       if (newPassword !== confirmPassword) {
-        setGlobalError("Passwords do not match");
+        setConfirmError("Passwords do not match");
         return;
       }
 
@@ -208,14 +239,36 @@ export default function ForgotPasswordForm({
       {/* ─── Alerts ─── */}
       {globalError && (
         <div className="auth-alert error">
-          <AlertCircle size={16} />
-          <span>{globalError}</span>
+          <div className="auth-alert-content">
+            <AlertCircle size={16} />
+            <div className="auth-alert-text">{globalError}</div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setGlobalError("")}
+            className="auth-alert-dismiss"
+            aria-label="Clear error message"
+            title="Clear error message"
+          >
+            <X size={15} />
+          </button>
         </div>
       )}
       {globalSuccess && (
         <div className="auth-alert success">
-          <CheckCircle2 size={16} />
-          <span>{globalSuccess}</span>
+          <div className="auth-alert-content">
+            <CheckCircle2 size={16} />
+            <div className="auth-alert-text">{globalSuccess}</div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setGlobalSuccess("")}
+            className="auth-alert-dismiss"
+            aria-label="Clear message"
+            title="Clear message"
+          >
+            <X size={15} />
+          </button>
         </div>
       )}
 
@@ -236,7 +289,10 @@ export default function ForgotPasswordForm({
             <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>Fill Demo:</span>
             <button
               type="button"
-              onClick={() => setEmail("student@scholarpulse.edu")}
+              onClick={() => {
+                setEmail("student@scholarpulse.edu");
+                setGlobalError("");
+              }}
               style={{
                 background: "rgba(99, 102, 241, 0.1)",
                 border: "1px solid rgba(99, 102, 241, 0.25)",
@@ -251,7 +307,10 @@ export default function ForgotPasswordForm({
             </button>
             <button
               type="button"
-              onClick={() => setEmail("teacher@scholarpulse.edu")}
+              onClick={() => {
+                setEmail("teacher@scholarpulse.edu");
+                setGlobalError("");
+              }}
               style={{
                 background: "rgba(16, 185, 129, 0.1)",
                 border: "1px solid rgba(16, 185, 129, 0.25)",
@@ -266,7 +325,10 @@ export default function ForgotPasswordForm({
             </button>
             <button
               type="button"
-              onClick={() => setEmail("admin@scholarpulse.edu")}
+              onClick={() => {
+                setEmail("admin@scholarpulse.edu");
+                setGlobalError("");
+              }}
               style={{
                 background: "rgba(245, 158, 11, 0.1)",
                 border: "1px solid rgba(245, 158, 11, 0.25)",
@@ -302,6 +364,7 @@ export default function ForgotPasswordForm({
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
+                  if (globalError) setGlobalError("");
                   if (emailError) setEmailError("");
                 }}
                 required
@@ -345,7 +408,7 @@ export default function ForgotPasswordForm({
                   position: "absolute",
                   left: 16,
                   top: "50%",
-                  transform: "translateY(-50)",
+                  transform: "translateY(-50%)",
                   color: "var(--text-muted)",
                   pointerEvents: "none",
                 }}
@@ -353,13 +416,24 @@ export default function ForgotPasswordForm({
               <input
                 id="reset-code"
                 type="text"
-                className="input-field focus-student"
+                className={`input-field focus-student ${codeError ? "input-error" : ""}`}
                 placeholder="6-digit verification code"
                 value={verificationCode}
-                onChange={(e) => setVerificationCode(e.target.value)}
+                onChange={(e) => {
+                  setVerificationCode(e.target.value);
+                  if (globalError) setGlobalError("");
+                  if (codeError) setCodeError("");
+                }}
                 required
+                aria-invalid={!!codeError}
               />
             </div>
+            {codeError && (
+              <div className="field-error">
+                <AlertCircle size={12} />
+                <span>{codeError}</span>
+              </div>
+            )}
           </div>
 
           {/* New Password */}
@@ -379,11 +453,16 @@ export default function ForgotPasswordForm({
               <input
                 id="reset-new-password"
                 type={showPassword ? "text" : "password"}
-                className="input-field focus-student"
+                className={`input-field focus-student ${passwordError ? "input-error" : ""}`}
                 placeholder="New secure password"
                 value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
+                onChange={(e) => {
+                  setNewPassword(e.target.value);
+                  if (globalError) setGlobalError("");
+                  if (passwordError) setPasswordError("");
+                }}
                 required
+                aria-invalid={!!passwordError}
               />
               <button
                 type="button"
@@ -394,6 +473,12 @@ export default function ForgotPasswordForm({
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+            {passwordError && (
+              <div className="field-error">
+                <AlertCircle size={12} />
+                <span>{passwordError}</span>
+              </div>
+            )}
           </div>
 
           {/* Confirm Password */}
@@ -413,13 +498,27 @@ export default function ForgotPasswordForm({
               <input
                 id="reset-confirm-password"
                 type={showPassword ? "text" : "password"}
-                className="input-field focus-student"
+                className={`input-field focus-student ${confirmError ? "input-error" : confirmPassword && !confirmError && confirmPassword === newPassword ? "input-valid" : ""}`}
                 placeholder="Confirm new password"
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  if (globalError) setGlobalError("");
+                  if (confirmError) setConfirmError("");
+                }}
                 required
+                aria-invalid={!!confirmError}
               />
             </div>
+            {confirmError && (
+              <div className="field-error">
+                <AlertCircle size={12} />
+                <span>{confirmError}</span>
+              </div>
+            )}
+            {confirmPassword && !confirmError && confirmPassword === newPassword && (
+              <div className="field-success">✓ Passwords match</div>
+            )}
           </div>
 
           {/* Password Requirements Checklist */}

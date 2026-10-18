@@ -232,7 +232,30 @@
   }
 }
 
-/* ─── Validation Error ─── */
+/* ─── Validation States ─── */
+.input-field.input-error {
+  border-color: rgba(248, 113, 113, 0.65) !important;
+  background: rgba(239, 68, 68, 0.05) !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+}
+
+.input-field.input-valid {
+  border-color: rgba(52, 211, 153, 0.4) !important;
+}
+
+.input-valid-icon {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #34d399;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease forwards;
+}
+
 .field-error {
   color: #f87171;
   font-size: 0.75rem;
@@ -240,7 +263,8 @@
   padding-left: 4px;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  line-height: 1.35;
   animation: slideDown 0.25s ease forwards;
 }
 
@@ -254,6 +278,11 @@
   font-size: 0.75rem;
   margin-top: 6px;
   padding-left: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.35;
+  animation: slideDown 0.25s ease forwards;
 }
 
 /* ─── Password Strength Indicator ─── */

@@ -16,6 +16,7 @@ import {
   User,
   AlertCircle,
   Check,
+  X,
 } from "lucide-react";
 
 type Role = "student" | "teacher" | "admin";
@@ -90,8 +91,12 @@ export default function SignUpForm({ onSwitchToLogin, onRoleChange, onSwitchToVe
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [nameError, setNameError] = useState("");
   const [emailError, setEmailError] = useState("");
+  const [userIdError, setUserIdError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const [confirmError, setConfirmError] = useState("");
+  const [termsError, setTermsError] = useState("");
   const [globalError, setGlobalError] = useState("");
   const [globalSuccess, setGlobalSuccess] = useState("");
 
@@ -107,22 +112,106 @@ export default function SignUpForm({ onSwitchToLogin, onRoleChange, onSwitchToVe
     return { level: 4, label: "Strong", className: "strength-strong" };
   }, [password]);
 
-  const validateEmail = (value: string): boolean => {
-    if (!value) {
-      setEmailError("");
+  // ─── Validators ───
+  const validateName = (value: string): boolean => {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      setNameError("Full name is required");
       return false;
     }
-    if (!EMAIL_REGEX.test(value) || value.length > 254) {
-      setEmailError("Please enter a valid email address");
+    if (trimmed.length < 2) {
+      setNameError("Full name must be at least 2 characters");
+      return false;
+    }
+    if (!/^[a-zA-Z\s.'-]+$/.test(trimmed)) {
+      setNameError("Name should only contain letters and standard characters");
+      return false;
+    }
+    setNameError("");
+    return true;
+  };
+
+  const validateEmail = (value: string): boolean => {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      setEmailError("Email address is required");
+      return false;
+    }
+    if (!EMAIL_REGEX.test(trimmed) || trimmed.length > 254) {
+      setEmailError("Please enter a valid institutional or personal email address");
       return false;
     }
     setEmailError("");
     return true;
   };
 
+  const validateUserId = (value: string): boolean => {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      setUserIdError(`${config.idLabel} is required`);
+      return false;
+    }
+    if (trimmed.length < 3) {
+      setUserIdError(`${config.idLabel} must be at least 3 characters`);
+      return false;
+    }
+    setUserIdError("");
+    return true;
+  };
+
+  const validatePassword = (value: string): boolean => {
+    if (!value) {
+      setPasswordError("Password is required");
+      return false;
+    }
+    const allMet = PASSWORD_REQUIREMENTS.every((r) => r.test(value));
+    if (!allMet) {
+      setPasswordError("Password must satisfy all security requirements below");
+      return false;
+    }
+    setPasswordError("");
+    return true;
+  };
+
+  const validateConfirmPassword = (confirmVal: string, pwdVal?: string): boolean => {
+    const basePwd = pwdVal !== undefined ? pwdVal : password;
+    if (!confirmVal) {
+      setConfirmError("Please confirm your password");
+      return false;
+    }
+    if (confirmVal !== basePwd) {
+      setConfirmError("Passwords do not match");
+      return false;
+    }
+    setConfirmError("");
+    return true;
+  };
+
+  const validateTerms = (accepted: boolean): boolean => {
+    if (!accepted) {
+      setTermsError("You must agree to the Terms of Service & Privacy Policy to create an account");
+      return false;
+    }
+    setTermsError("");
+    return true;
+  };
+
+  // ─── Input Handlers ───
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setName(value);
+    if (globalError) setGlobalError("");
+    if (nameError) validateName(value);
+  };
+
+  const handleNameBlur = () => {
+    if (name) validateName(name);
+  };
+
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setEmail(value);
+    if (globalError) setGlobalError("");
     if (emailError) validateEmail(value);
   };
 
@@ -130,12 +219,45 @@ export default function SignUpForm({ onSwitchToLogin, onRoleChange, onSwitchToVe
     if (email) validateEmail(email);
   };
 
+  const handleUserIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setUserId(value);
+    if (globalError) setGlobalError("");
+    if (userIdError) validateUserId(value);
+  };
+
+  const handleUserIdBlur = () => {
+    if (userId) validateUserId(userId);
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setPassword(value);
+    if (globalError) setGlobalError("");
+    if (passwordError) validatePassword(value);
+    if (confirmPassword) validateConfirmPassword(confirmPassword, value);
+  };
+
+  const handlePasswordBlur = () => {
+    if (password) validatePassword(password);
+  };
+
+  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setConfirmPassword(value);
+    if (globalError) setGlobalError("");
+    if (confirmError) validateConfirmPassword(value);
+  };
+
   const handleConfirmPasswordBlur = () => {
-    if (confirmPassword && confirmPassword !== password) {
-      setConfirmError("Passwords do not match");
-    } else {
-      setConfirmError("");
-    }
+    if (confirmPassword) validateConfirmPassword(confirmPassword);
+  };
+
+  const handleTermsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = e.target.checked;
+    setAcceptTerms(checked);
+    if (globalError) setGlobalError("");
+    if (termsError && checked) setTermsError("");
   };
 
   const handleRoleSwitch = useCallback(
@@ -148,8 +270,12 @@ export default function SignUpForm({ onSwitchToLogin, onRoleChange, onSwitchToVe
       setConfirmPassword("");
       setShowPassword(false);
       setShowConfirmPassword(false);
+      setNameError("");
       setEmailError("");
+      setUserIdError("");
+      setPasswordError("");
       setConfirmError("");
+      setTermsError("");
       setGlobalError("");
       setGlobalSuccess("");
       onRoleChange(role);
@@ -163,40 +289,16 @@ export default function SignUpForm({ onSwitchToLogin, onRoleChange, onSwitchToVe
       setGlobalError("");
       setGlobalSuccess("");
 
-      // Client-side validations
-      if (!name.trim() || !email.trim() || !userId.trim() || !password) {
-        setGlobalError("Please fill out all required fields");
-        return;
-      }
+      const isNameValid = validateName(name);
+      const isEmailValid = validateEmail(email);
+      const isUserIdValid = validateUserId(userId);
+      const isPasswordValid = validatePassword(password);
+      const isConfirmValid = validateConfirmPassword(confirmPassword);
+      const isTermsValid = validateTerms(acceptTerms);
 
-      if (!acceptTerms) {
-        setGlobalError("You must agree to the Terms of Service and Privacy Policy to continue");
-        return;
-      }
-
-      if (!name.trim()) {
-        setGlobalError("Full name is required");
-        return;
-      }
-
-      if (!validateEmail(email)) {
-        setEmailError("Please enter a valid email address");
-        return;
-      }
-
-      if (!userId.trim()) {
-        setGlobalError("User ID is required");
-        return;
-      }
-
-      const allMet = PASSWORD_REQUIREMENTS.every((r) => r.test(password));
-      if (!allMet) {
-        setGlobalError("Password does not meet all requirements");
-        return;
-      }
-
-      if (password !== confirmPassword) {
-        setConfirmError("Passwords do not match");
+      // Client-side validations: halt if any check fails
+      if (!isNameValid || !isEmailValid || !isUserIdValid || !isPasswordValid || !isConfirmValid || !isTermsValid) {
+        setGlobalError("Please review and resolve the highlighted errors before creating your account.");
         return;
       }
 
@@ -341,43 +443,75 @@ export default function SignUpForm({ onSwitchToLogin, onRoleChange, onSwitchToVe
       {/* ─── Alert Banner ─── */}
       {globalError && (
         <div className="auth-alert error">
-          <AlertCircle size={16} />
-          <span>{globalError}</span>
+          <div className="auth-alert-content">
+            <AlertCircle size={16} />
+            <div className="auth-alert-text">{globalError}</div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setGlobalError("")}
+            className="auth-alert-dismiss"
+            aria-label="Clear error message"
+            title="Clear error message"
+          >
+            <X size={15} />
+          </button>
         </div>
       )}
       {globalSuccess && (
         <div className="auth-alert success">
-          <span>{globalSuccess}</span>
+          <div className="auth-alert-content">
+            <div className="auth-alert-text">{globalSuccess}</div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setGlobalSuccess("")}
+            className="auth-alert-dismiss"
+            aria-label="Clear message"
+            title="Clear message"
+          >
+            <X size={15} />
+          </button>
         </div>
       )}
 
       {/* ─── Sign Up Form ─── */}
       <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {/* Full Name */}
-        <div style={{ position: "relative" }}>
-          <User
-            size={18}
-            style={{
-              position: "absolute",
-              left: 16,
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "var(--text-muted)",
-              pointerEvents: "none",
-              zIndex: 1,
-            }}
-          />
-          <input
-            id="signup-name"
-            type="text"
-            className={`input-field ${config.focusClass}`}
-            placeholder="Full name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            autoComplete="name"
-            aria-label="Full name"
-          />
+        <div>
+          <div style={{ position: "relative" }}>
+            <User
+              size={18}
+              style={{
+                position: "absolute",
+                left: 16,
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "var(--text-muted)",
+                pointerEvents: "none",
+                zIndex: 1,
+              }}
+            />
+            <input
+              id="signup-name"
+              type="text"
+              className={`input-field ${config.focusClass} ${nameError ? "input-error" : name && !nameError ? "input-valid" : ""}`}
+              placeholder="Full name"
+              value={name}
+              onChange={handleNameChange}
+              onBlur={handleNameBlur}
+              required
+              autoComplete="name"
+              aria-label="Full name"
+              aria-invalid={!!nameError}
+            />
+          </div>
+          {nameError && (
+            <div className="field-error">
+              <AlertCircle size={12} />
+              <span>{nameError}</span>
+            </div>
+          )}
         </div>
 
         {/* Email */}
@@ -398,7 +532,7 @@ export default function SignUpForm({ onSwitchToLogin, onRoleChange, onSwitchToVe
             <input
               id="signup-email"
               type="email"
-              className={`input-field ${config.focusClass}`}
+              className={`input-field ${config.focusClass} ${emailError ? "input-error" : email && !emailError ? "input-valid" : ""}`}
               placeholder="Email address"
               value={email}
               onChange={handleEmailChange}
@@ -418,30 +552,40 @@ export default function SignUpForm({ onSwitchToLogin, onRoleChange, onSwitchToVe
         </div>
 
         {/* User ID */}
-        <div style={{ position: "relative" }}>
-          <IdCard
-            size={18}
-            style={{
-              position: "absolute",
-              left: 16,
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "var(--text-muted)",
-              pointerEvents: "none",
-              zIndex: 1,
-            }}
-          />
-          <input
-            id="signup-userId"
-            type="text"
-            className={`input-field ${config.focusClass}`}
-            placeholder={config.idPlaceholder}
-            value={userId}
-            onChange={(e) => setUserId(e.target.value)}
-            required
-            autoComplete="username"
-            aria-label={config.idLabel}
-          />
+        <div>
+          <div style={{ position: "relative" }}>
+            <IdCard
+              size={18}
+              style={{
+                position: "absolute",
+                left: 16,
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "var(--text-muted)",
+                pointerEvents: "none",
+                zIndex: 1,
+              }}
+            />
+            <input
+              id="signup-userId"
+              type="text"
+              className={`input-field ${config.focusClass} ${userIdError ? "input-error" : userId && !userIdError ? "input-valid" : ""}`}
+              placeholder={config.idPlaceholder}
+              value={userId}
+              onChange={handleUserIdChange}
+              onBlur={handleUserIdBlur}
+              required
+              autoComplete="username"
+              aria-label={config.idLabel}
+              aria-invalid={!!userIdError}
+            />
+          </div>
+          {userIdError && (
+            <div className="field-error">
+              <AlertCircle size={12} />
+              <span>{userIdError}</span>
+            </div>
+          )}
         </div>
 
         {/* Password */}
@@ -462,13 +606,15 @@ export default function SignUpForm({ onSwitchToLogin, onRoleChange, onSwitchToVe
             <input
               id="signup-password"
               type={showPassword ? "text" : "password"}
-              className={`input-field ${config.focusClass}`}
+              className={`input-field ${config.focusClass} ${passwordError ? "input-error" : ""}`}
               placeholder="Create password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={handlePasswordChange}
+              onBlur={handlePasswordBlur}
               required
               autoComplete="new-password"
               aria-label="Create password"
+              aria-invalid={!!passwordError}
               style={{ paddingRight: 48 }}
             />
             <button
@@ -480,6 +626,12 @@ export default function SignUpForm({ onSwitchToLogin, onRoleChange, onSwitchToVe
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
+          {passwordError && (
+            <div className="field-error">
+              <AlertCircle size={12} />
+              <span>{passwordError}</span>
+            </div>
+          )}
 
           {/* Password Strength Bar */}
           {password && (
@@ -532,13 +684,10 @@ export default function SignUpForm({ onSwitchToLogin, onRoleChange, onSwitchToVe
             <input
               id="signup-confirm-password"
               type={showConfirmPassword ? "text" : "password"}
-              className={`input-field ${config.focusClass}`}
+              className={`input-field ${config.focusClass} ${confirmError ? "input-error" : confirmPassword && !confirmError && confirmPassword === password ? "input-valid" : ""}`}
               placeholder="Confirm password"
               value={confirmPassword}
-              onChange={(e) => {
-                setConfirmPassword(e.target.value);
-                if (confirmError) setConfirmError("");
-              }}
+              onChange={handleConfirmPasswordChange}
               onBlur={handleConfirmPasswordBlur}
               required
               autoComplete="new-password"
@@ -567,20 +716,29 @@ export default function SignUpForm({ onSwitchToLogin, onRoleChange, onSwitchToVe
         </div>
 
         {/* Accept Terms Checkbox */}
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginTop: 4, marginBottom: 8 }}>
-          <input
-            type="checkbox"
-            id="accept-terms"
-            checked={acceptTerms}
-            onChange={(e) => {
-              setAcceptTerms(e.target.checked);
-              if (globalError) setGlobalError("");
-            }}
-            style={{ marginTop: 3, cursor: "pointer" }}
-          />
-          <label htmlFor="accept-terms" style={{ color: "var(--text-secondary)", fontSize: "0.85rem", lineHeight: 1.4, cursor: "pointer" }}>
-            I agree to the <Link href="/privacy" style={{ color: "var(--primary)", textDecoration: "underline" }} target="_blank">Privacy Policy</Link> and <Link href="/terms" style={{ color: "var(--primary)", textDecoration: "underline" }} target="_blank">Terms &amp; Conditions</Link>.
-          </label>
+        <div>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginTop: 4 }}>
+            <input
+              type="checkbox"
+              id="accept-terms"
+              checked={acceptTerms}
+              onChange={handleTermsChange}
+              style={{
+                marginTop: 3,
+                cursor: "pointer",
+                accentColor: "var(--primary)",
+              }}
+            />
+            <label htmlFor="accept-terms" style={{ color: "var(--text-secondary)", fontSize: "0.85rem", lineHeight: 1.4, cursor: "pointer" }}>
+              I agree to the <Link href="/privacy" style={{ color: "var(--primary)", textDecoration: "underline" }} target="_blank">Privacy Policy</Link> and <Link href="/terms" style={{ color: "var(--primary)", textDecoration: "underline" }} target="_blank">Terms &amp; Conditions</Link>.
+            </label>
+          </div>
+          {termsError && (
+            <div className="field-error" style={{ marginTop: 4, marginBottom: 4 }}>
+              <AlertCircle size={12} />
+              <span>{termsError}</span>
+            </div>
+          )}
         </div>
 
         {/* Submit Button */}

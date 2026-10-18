@@ -14,6 +14,7 @@ import {
   ArrowRight,
   IdCard,
   AlertCircle,
+  X,
 } from "lucide-react";
 
 type Role = "student" | "teacher" | "admin";
@@ -86,32 +87,81 @@ export default function LoginForm({
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [userIdError, setUserIdError] = useState("");
   const [globalError, setGlobalError] = useState("");
   const [globalSuccess, setGlobalSuccess] = useState(loggedOutNotice || "");
 
   const config = ROLE_CONFIG[activeRole];
 
   const validateEmail = (value: string): boolean => {
-    if (!value) {
-      setEmailError("");
+    const trimmed = value.trim();
+    if (!trimmed) {
+      setEmailError("Email address is required");
       return false;
     }
-    if (!EMAIL_REGEX.test(value) || value.length > 254) {
-      setEmailError("Please enter a valid email address");
+    if (!EMAIL_REGEX.test(trimmed) || trimmed.length > 254) {
+      setEmailError("Please enter a valid institutional email address");
       return false;
     }
     setEmailError("");
     return true;
   };
 
+  const validatePassword = (value: string): boolean => {
+    if (!value) {
+      setPasswordError("Password is required");
+      return false;
+    }
+    if (value.length < 6) {
+      setPasswordError("Password must be at least 6 characters");
+      return false;
+    }
+    setPasswordError("");
+    return true;
+  };
+
+  const validateUserId = (value: string): boolean => {
+    const trimmed = value.trim();
+    if (trimmed && trimmed.length < 3) {
+      setUserIdError(`${config.idLabel} must be at least 3 characters`);
+      return false;
+    }
+    setUserIdError("");
+    return true;
+  };
+
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setEmail(value);
-    if (emailError) validateEmail(value); // Re-validate on change if error was showing
+    if (globalError) setGlobalError("");
+    if (emailError) validateEmail(value);
   };
 
   const handleEmailBlur = () => {
     if (email) validateEmail(email);
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setPassword(value);
+    if (globalError) setGlobalError("");
+    if (passwordError) validatePassword(value);
+  };
+
+  const handlePasswordBlur = () => {
+    if (password) validatePassword(password);
+  };
+
+  const handleUserIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setUserId(value);
+    if (globalError) setGlobalError("");
+    if (userIdError) validateUserId(value);
+  };
+
+  const handleUserIdBlur = () => {
+    if (userId) validateUserId(userId);
   };
 
   const handleRoleSwitch = useCallback(
@@ -122,6 +172,8 @@ export default function LoginForm({
       setUserId("");
       setShowPassword(false);
       setEmailError("");
+      setPasswordError("");
+      setUserIdError("");
       setGlobalError("");
       setGlobalSuccess("");
       onRoleChange(role);
@@ -136,20 +188,15 @@ export default function LoginForm({
       setGlobalSuccess("");
 
       const cleanEmail = email.trim();
+      const isEmailValid = validateEmail(cleanEmail);
+      const isPasswordValid = validatePassword(password);
+      const isUserIdValid = validateUserId(userId);
 
-      // Client-side validation
-      if (!cleanEmail && !password) {
-        setGlobalError("Please enter your email and password");
-        return;
-      }
-
-      if (!validateEmail(cleanEmail)) {
-        setEmailError("Please enter a valid email address");
-        return;
-      }
-
-      if (!password) {
-        setGlobalError("Password is required");
+      // Client-side validation: halt if any required field fails
+      if (!isEmailValid || !isPasswordValid || !isUserIdValid) {
+        if (!cleanEmail && !password) {
+          setGlobalError("Please provide your credentials to sign in.");
+        }
         return;
       }
 
@@ -168,13 +215,20 @@ export default function LoginForm({
         const data = await res.json();
 
         if (!res.ok) {
-          const errMsg =
+          const rawMsg =
             typeof data.message === "string"
               ? data.message
               : Array.isArray(data.message)
               ? data.message[0]
               : data.error || "Login failed. Please check your credentials.";
-          setGlobalError(errMsg);
+
+          if (res.status === 401 || rawMsg.toLowerCase().includes("invalid credentials") || rawMsg.toLowerCase().includes("unauthorized")) {
+            setGlobalError("Invalid email or password. Please verify your credentials or click a Quick Demo role above.");
+          } else if (res.status === 404 || rawMsg.toLowerCase().includes("not found")) {
+            setGlobalError("Account not found. Please create a new account or select a Quick Demo role above.");
+          } else {
+            setGlobalError(rawMsg);
+          }
           return;
         }
 
@@ -397,13 +451,35 @@ export default function LoginForm({
       {/* ─── Alert Banner ─── */}
       {globalError && (
         <div className="auth-alert error">
-          <AlertCircle size={16} />
-          <span>{globalError}</span>
+          <div className="auth-alert-content">
+            <AlertCircle size={16} />
+            <div className="auth-alert-text">{globalError}</div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setGlobalError("")}
+            className="auth-alert-dismiss"
+            aria-label="Clear error message"
+            title="Clear error message"
+          >
+            <X size={15} />
+          </button>
         </div>
       )}
       {globalSuccess && (
         <div className="auth-alert success">
-          <span>{globalSuccess}</span>
+          <div className="auth-alert-content">
+            <div className="auth-alert-text">{globalSuccess}</div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setGlobalSuccess("")}
+            className="auth-alert-dismiss"
+            aria-label="Clear message"
+            title="Clear message"
+          >
+            <X size={15} />
+          </button>
         </div>
       )}
 
@@ -427,15 +503,23 @@ export default function LoginForm({
             <input
               id="login-userId"
               type="text"
-              className={`input-field ${config.focusClass}`}
+              className={`input-field ${config.focusClass} ${userIdError ? "input-error" : ""}`}
               placeholder={config.idPlaceholder}
               value={userId}
-              onChange={(e) => setUserId(e.target.value)}
+              onChange={handleUserIdChange}
+              onBlur={handleUserIdBlur}
               required
               autoComplete="username"
               aria-label={config.idLabel}
+              aria-invalid={!!userIdError}
             />
           </div>
+          {userIdError && (
+            <div className="field-error">
+              <AlertCircle size={12} />
+              <span>{userIdError}</span>
+            </div>
+          )}
         </div>
 
         {/* Email Field */}
@@ -456,7 +540,7 @@ export default function LoginForm({
             <input
               id="login-email"
               type="email"
-              className={`input-field ${config.focusClass}`}
+              className={`input-field ${config.focusClass} ${emailError ? "input-error" : email && !emailError ? "input-valid" : ""}`}
               placeholder="Email address"
               value={email}
               onChange={handleEmailChange}
@@ -476,39 +560,49 @@ export default function LoginForm({
         </div>
 
         {/* Password Field */}
-        <div style={{ position: "relative" }}>
-          <Lock
-            size={18}
-            style={{
-              position: "absolute",
-              left: 16,
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "var(--text-muted)",
-              pointerEvents: "none",
-              zIndex: 1,
-            }}
-          />
-          <input
-            id="login-password"
-            type={showPassword ? "text" : "password"}
-            className={`input-field ${config.focusClass}`}
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="current-password"
-            aria-label="Password"
-            style={{ paddingRight: 48 }}
-          />
-          <button
-            type="button"
-            className="password-toggle"
-            onClick={() => setShowPassword(!showPassword)}
-            aria-label={showPassword ? "Hide password" : "Show password"}
-          >
-            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-          </button>
+        <div>
+          <div style={{ position: "relative" }}>
+            <Lock
+              size={18}
+              style={{
+                position: "absolute",
+                left: 16,
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "var(--text-muted)",
+                pointerEvents: "none",
+                zIndex: 1,
+              }}
+            />
+            <input
+              id="login-password"
+              type={showPassword ? "text" : "password"}
+              className={`input-field ${config.focusClass} ${passwordError ? "input-error" : ""}`}
+              placeholder="Password"
+              value={password}
+              onChange={handlePasswordChange}
+              onBlur={handlePasswordBlur}
+              required
+              autoComplete="current-password"
+              aria-label="Password"
+              aria-invalid={!!passwordError}
+              style={{ paddingRight: 48 }}
+            />
+            <button
+              type="button"
+              className="password-toggle"
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+          {passwordError && (
+            <div className="field-error">
+              <AlertCircle size={12} />
+              <span>{passwordError}</span>
+            </div>
+          )}
         </div>
 
         {/* Remember Me & Forgot Password */}

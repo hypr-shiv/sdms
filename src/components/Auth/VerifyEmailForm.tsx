@@ -42,6 +42,8 @@ export default function VerifyEmailForm({
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const [emailError, setEmailError] = useState("");
+  const [codeError, setCodeError] = useState("");
   const [globalError, setGlobalError] = useState("");
   const [globalSuccess, setGlobalSuccess] = useState("");
   const [isVerified, setIsVerified] = useState(false);
@@ -68,13 +70,30 @@ export default function VerifyEmailForm({
   const handleSetDemoEmail = (demoEmail: string) => {
     setEmail(demoEmail);
     setIsEditingEmail(false);
+    setEmailError("");
+    setCodeError("");
     setGlobalError("");
     setGlobalSuccess("");
+  };
+
+  const validateEmail = (val: string): boolean => {
+    const trimmed = val.trim();
+    if (!trimmed) {
+      setEmailError("Institutional email address is required");
+      return false;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setEmailError("Please enter a valid email address");
+      return false;
+    }
+    setEmailError("");
+    return true;
   };
 
   // Handle individual digit change
   const handleDigitChange = (index: number, value: string) => {
     setGlobalError("");
+    setCodeError("");
     const cleaned = value.replace(/\D/g, "");
 
     // Handle typing single character
@@ -135,6 +154,7 @@ export default function VerifyEmailForm({
     const chars = activeCode.trim().slice(0, 6).split("");
     if (chars.length === 6) {
       setDigits(chars);
+      setCodeError("");
       setGlobalError("");
       inputRefs.current[5]?.focus();
     }
@@ -205,16 +225,19 @@ export default function VerifyEmailForm({
       e.preventDefault();
       setGlobalError("");
       setGlobalSuccess("");
+      setCodeError("");
 
       const cleanEmail = email.trim();
-      if (!cleanEmail) {
-        setGlobalError("Please provide an email address to verify.");
+      const isEmailValid = validateEmail(cleanEmail);
+      if (!isEmailValid) {
+        setGlobalError("Please provide a valid email address to verify.");
         return;
       }
 
       const fullCode = digits.join("").trim();
       if (fullCode.length !== 6) {
-        setGlobalError("Please enter the complete 6-digit verification code.");
+        setCodeError("Please enter the complete 6-digit verification code.");
+        setGlobalError("Please enter all 6 digits of your security code.");
         return;
       }
 
@@ -388,6 +411,10 @@ export default function VerifyEmailForm({
                 onChange={(e) => {
                   setEmail(e.target.value);
                   if (globalError) setGlobalError("");
+                  if (emailError) validateEmail(e.target.value);
+                }}
+                onBlur={() => {
+                  if (email) validateEmail(email);
                 }}
                 placeholder="student@scholarpulse.edu"
                 style={{
@@ -423,6 +450,13 @@ export default function VerifyEmailForm({
             >
               <Edit2 size={13} />
             </button>
+          </div>
+        )}
+
+        {emailError && (
+          <div className="field-error" style={{ justifyContent: "center", marginTop: 6 }}>
+            <AlertCircle size={12} />
+            <span>{emailError}</span>
           </div>
         )}
 
@@ -584,17 +618,30 @@ export default function VerifyEmailForm({
                     fontFamily: "monospace",
                     borderRadius: 12,
                     background: digit ? "rgba(99, 102, 241, 0.08)" : "rgba(15, 23, 42, 0.6)",
-                    border: digit
+                    border: codeError && !digit
+                      ? "2px solid #f87171"
+                      : digit
                       ? "2px solid #818cf8"
                       : "1px solid rgba(255, 255, 255, 0.12)",
                     color: "#f8fafc",
                     outline: "none",
                     transition: "all 0.15s ease",
-                    boxShadow: digit ? "0 0 16px rgba(99, 102, 241, 0.25)" : "none",
+                    boxShadow: codeError && !digit
+                      ? "0 0 12px rgba(239, 68, 68, 0.25)"
+                      : digit
+                      ? "0 0 16px rgba(99, 102, 241, 0.25)"
+                      : "none",
                   }}
                 />
               ))}
             </div>
+
+            {codeError && (
+              <div className="field-error" style={{ justifyContent: "center", marginTop: 8 }}>
+                <AlertCircle size={12} />
+                <span>{codeError}</span>
+              </div>
+            )}
           </div>
 
           {/* ─── Quick Fill Chip (Convenience for testing / dev) ─── */}
