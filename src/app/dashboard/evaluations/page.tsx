@@ -812,19 +812,27 @@ export default function EvaluationsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {analytics.courseRankings.map((c) => (
-                    <tr key={c.courseCode} style={{ borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
-                      <td style={{ padding: "10px", fontWeight: 700, color: "var(--text-primary)" }}>
-                        <span className="course-code-badge" style={{ marginRight: 6 }}>{c.courseCode}</span>
-                        {c.courseName}
-                      </td>
-                      <td style={{ padding: "10px", color: "var(--text-secondary)" }}>{c.instructorName}</td>
-                      <td style={{ padding: "10px", textAlign: "center" }}>{c.responseCount}</td>
-                      <td style={{ padding: "10px", textAlign: "right", fontWeight: 800, color: "#f59e0b" }}>
-                        ★ {c.averageScore}
+                  {analytics.courseRankings && analytics.courseRankings.length > 0 ? (
+                    analytics.courseRankings.map((c) => (
+                      <tr key={c.courseCode} style={{ borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
+                        <td style={{ padding: "10px", fontWeight: 700, color: "var(--text-primary)" }}>
+                          <span className="course-code-badge" style={{ marginRight: 6 }}>{c.courseCode}</span>
+                          {c.courseName}
+                        </td>
+                        <td style={{ padding: "10px", color: "var(--text-secondary)" }}>{c.instructorName}</td>
+                        <td style={{ padding: "10px", textAlign: "center" }}>{c.responseCount}</td>
+                        <td style={{ padding: "10px", textAlign: "right", fontWeight: 800, color: "#f59e0b" }}>
+                          ★ {c.averageScore}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4} style={{ padding: "32px", textAlign: "center", color: "var(--text-secondary)" }}>
+                        No course submissions recorded yet. Clean database state.
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
@@ -928,21 +936,31 @@ export default function EvaluationsPage() {
 
           {/* Comments Feed List */}
           <div className="comments-feed-list">
-            {analytics.qualitativeComments
-              .filter((c) => sentimentFilter === "all" || c.sentiment === sentimentFilter)
-              .map((c) => (
-                <div key={c.id} className="comment-feed-card">
-                  <div className="comment-card-top">
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span className="course-code-badge">{c.courseCode}</span>
-                      <span style={{ fontSize: "0.88rem", fontWeight: 600 }}>{c.courseName}</span>
-                      <span style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>• Faculty: {c.instructorName}</span>
+            {analytics.qualitativeComments && analytics.qualitativeComments.length > 0 ? (
+              analytics.qualitativeComments
+                .filter((c) => sentimentFilter === "all" || c.sentiment === sentimentFilter)
+                .map((c) => (
+                  <div key={c.id} className="comment-feed-card">
+                    <div className="comment-card-top">
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span className="course-code-badge">{c.courseCode}</span>
+                        <span style={{ fontSize: "0.88rem", fontWeight: 600 }}>{c.courseName}</span>
+                        <span style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>• Faculty: {c.instructorName}</span>
+                      </div>
+                      <span className={`sentiment-pill ${c.sentiment}`}>{c.sentiment}</span>
                     </div>
-                    <span className={`sentiment-pill ${c.sentiment}`}>{c.sentiment}</span>
+                    <div className="comment-card-body">“{c.answer}”</div>
                   </div>
-                  <div className="comment-card-body">“{c.answer}”</div>
-                </div>
-              ))}
+                ))
+            ) : (
+              <div style={{ padding: "48px 24px", textAlign: "center", background: "var(--bg-card)", borderRadius: 14, border: "1px solid var(--border-glass)" }}>
+                <MessageSquare size={36} style={{ color: "var(--text-secondary)", opacity: 0.5, marginBottom: 12, display: "inline-block" }} />
+                <h4 style={{ margin: "0 0 6px 0", fontSize: "1.05rem", fontWeight: 700 }}>No Qualitative Reviews Recorded</h4>
+                <p style={{ margin: 0, fontSize: "0.88rem", color: "var(--text-secondary)", maxWidth: 440, marginInline: "auto" }}>
+                  Zero synthetic reviews exist. Authentic qualitative feedback will appear here as students complete their course evaluations.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}

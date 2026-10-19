@@ -3,19 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowUpRight, Check, AlertCircle, BookOpen, TrendingUp, Clock, GraduationCap, Bell as BellIcon, FileText, ClipboardList, HeartHandshake, Sparkles, ShieldCheck } from "lucide-react";
-import {
-  MOCK_STUDENT_STATS,
-  MOCK_TEACHER_STATS,
-  MOCK_ADMIN_STATS,
-  MOCK_SCHEDULE_TODAY,
-  MOCK_AT_RISK_STUDENTS,
-  MOCK_BADGES,
-  MOCK_STUDENT_SCHEDULE_TODAY,
-  MOCK_UPCOMING_DEADLINES,
-  MOCK_GPA_HISTORY,
-  MOCK_NOTIFICATIONS,
-  type Role,
-} from "@/lib/mockData";
+import { type Role } from "@/lib/mockData";
 import Modal from "@/components/Modal";
 
 // ─── Utilities ───
@@ -114,27 +102,71 @@ function GpaSparkline({ data }: { data: { semester: string; gpa: number }[] }) {
 // ═══════════════════════════════════════════════════
 // STUDENT DASHBOARD (Enhanced Bento Layout)
 // ═══════════════════════════════════════════════════
-function StudentDashboard({ name, stats, studentWellness }: { name: string; stats?: any; studentWellness?: any }) {
+function StudentDashboard({
+  name,
+  stats,
+  studentWellness,
+  assignments = [],
+  notifications = [],
+  schedule = [],
+}: {
+  name: string;
+  stats?: any;
+  studentWellness?: any;
+  assignments?: any[];
+  notifications?: any[];
+  schedule?: any[];
+}) {
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const studentStats = stats || MOCK_STUDENT_STATS;
+  const [selectedAssignment, setSelectedAssignment] = useState<any>(null);
+  const studentStats = {
+    gpa: 3.8,
+    gpaTrend: 0.1,
+    attendancePercent: 92,
+    attendanceTrend: 1,
+    assignmentsCompleted: 0,
+    assignmentsTotal: 0,
+    upcomingDeadlines: 0,
+    streak: 0,
+    totalCredits: 0,
+    rank: 1,
+    totalStudents: 1,
+    presentDays: 0,
+    absentDays: 0,
+    lateDays: 0,
+    ...stats,
+  };
   const circumference = 2 * Math.PI * 70;
   const dashOffset = circumference * (1 - (studentStats.attendancePercent || 85) / 100);
 
-  const gpaDisplay = useCountUp(studentStats.gpa || 3.42, 1400, 2);
+  const gpaDisplay = useCountUp(studentStats.gpa || 3.8, 1400, 2);
   const [countdowns, setCountdowns] = useState<Record<string, string>>({});
+
+  const upcomingDeadlines = assignments && assignments.length > 0
+    ? assignments.filter((a: any) => a.workflowState === 'published').slice(0, 4)
+    : [];
 
   // Live countdown timer
   useEffect(() => {
     const update = () => {
       const newCountdowns: Record<string, string> = {};
-      MOCK_UPCOMING_DEADLINES.forEach(d => { newCountdowns[d.id] = getCountdown(d.dueDate); });
+      upcomingDeadlines.forEach((d: any) => {
+        newCountdowns[d.id] = getCountdown(d.due || d.dueDate || new Date().toISOString());
+      });
       setCountdowns(newCountdowns);
     };
     update();
     const timer = setInterval(update, 60000);
     return () => clearInterval(timer);
-  }, []);
+  }, [assignments]);
+
+  const gpaVal = studentStats.gpa || 3.8;
+  const gpaHistory = [
+    { semester: 'Fall 25', gpa: Math.max(2.0, Number((gpaVal - 0.2).toFixed(2))) },
+    { semester: 'Spring 26', gpa: Math.max(2.0, Number((gpaVal - 0.1).toFixed(2))) },
+    { semester: 'Fall 26', gpa: Number(gpaVal.toFixed(2)) },
+  ];
 
   // Attendance ring color
   const attPercent = studentStats.attendancePercent || 85;
@@ -376,7 +408,7 @@ function StudentDashboard({ name, stats, studentWellness }: { name: string; stat
                 Rank #{studentStats.rank || 24}/{studentStats.totalStudents || 180}
               </span>
             </div>
-            <GpaSparkline data={MOCK_GPA_HISTORY} />
+            <GpaSparkline data={gpaHistory} />
           </div>
         </div>
 
@@ -431,18 +463,26 @@ function StudentDashboard({ name, stats, studentWellness }: { name: string; stat
             </button>
           </div>
           <div className="deadline-list" style={{ flex: 1 }}>
-            {MOCK_UPCOMING_DEADLINES.map((d) => (
-              <div className="deadline-item" key={d.id} onClick={() => setIsModalOpen(true)}>
-                <div className={`deadline-urgency-dot urgency-${d.urgency}`} />
-                <div className="deadline-content">
-                  <div className="deadline-title">{d.title}</div>
-                  <div className="deadline-course">{d.courseCode} · {d.courseName}</div>
+            {upcomingDeadlines.length > 0 ? (
+              upcomingDeadlines.map((d: any) => (
+                <div className="deadline-item" key={d.id} onClick={() => { setSelectedAssignment(d); setIsModalOpen(true); }}>
+                  <div className={`deadline-urgency-dot urgency-${d.urgency || 'medium'}`} />
+                  <div className="deadline-content">
+                    <div className="deadline-title">{d.title}</div>
+                    <div className="deadline-course">{d.courseCode || d.course} · {d.courseName || d.course}</div>
+                  </div>
+                  <div className={`deadline-countdown ${d.urgency === 'high' ? 'urgent' : ''}`}>
+                    {countdowns[d.id] || '—'}
+                  </div>
                 </div>
-                <div className={`deadline-countdown ${d.urgency === 'high' ? 'urgent' : ''}`}>
-                  {countdowns[d.id] || '—'}
-                </div>
+              ))
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', padding: '24px 16px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                <Check size={28} color="#10b981" style={{ marginBottom: 8 }} />
+                <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.92rem' }}>No pending deadlines</div>
+                <div style={{ fontSize: '0.8rem', marginTop: 4 }}>You have turned in all active assignments.</div>
               </div>
-            ))}
+            )}
           </div>
         </div>
 
@@ -488,12 +528,22 @@ function StudentDashboard({ name, stats, studentWellness }: { name: string; stat
 
             {/* Badges */}
             <div className="badge-grid">
-              {MOCK_BADGES.map((badge) => (
-                <div className={`badge-item rarity-${badge.rarity}`} key={badge.id}>
-                  {badge.icon}
-                  <span className="badge-tooltip">{badge.name}</span>
-                </div>
-              ))}
+              <div className="badge-item rarity-rare" title="100% attendance consistency">
+                ⭐
+                <span className="badge-tooltip">Active Scholar</span>
+              </div>
+              <div className="badge-item rarity-epic" title="Semester GPA advancement">
+                📈
+                <span className="badge-tooltip">GPA Climber</span>
+              </div>
+              <div className="badge-item rarity-common" title="Early assignment submission">
+                🐦
+                <span className="badge-tooltip">Early Submissions</span>
+              </div>
+              <div className="badge-item rarity-legendary" title="Active attendance streak">
+                🔥
+                <span className="badge-tooltip">Streak Legend</span>
+              </div>
             </div>
           </div>
         </div>
@@ -507,28 +557,35 @@ function StudentDashboard({ name, stats, studentWellness }: { name: string; stat
             </button>
           </div>
           <div className="schedule-timeline">
-            {MOCK_STUDENT_SCHEDULE_TODAY.map((entry) => {
-              // Simple "active" check: if current hour is between start and end
-              const now = new Date();
-              const [startH, startM] = entry.time.split(':').map(Number);
-              const [endH, endM] = entry.endTime.split(':').map(Number);
-              const nowMinutes = now.getHours() * 60 + now.getMinutes();
-              const startMinutes = startH * 60 + startM;
-              const endMinutes = endH * 60 + endM;
-              const isActive = nowMinutes >= startMinutes && nowMinutes < endMinutes;
+            {schedule && schedule.length > 0 ? (
+              schedule.map((entry: any) => {
+                const now = new Date();
+                const [startH, startM] = (entry.time || '09:00').split(':').map(Number);
+                const [endH, endM] = (entry.endTime || '10:00').split(':').map(Number);
+                const nowMinutes = now.getHours() * 60 + now.getMinutes();
+                const startMinutes = startH * 60 + startM;
+                const endMinutes = endH * 60 + endM;
+                const isActive = nowMinutes >= startMinutes && nowMinutes < endMinutes;
 
-              return (
-                <div className={`time-block ${isActive ? 'active' : ''}`} key={entry.id}>
-                  <div className="time-block-indicator" style={{ background: entry.color }} />
-                  <div className="time-block-time">{entry.time} – {entry.endTime}</div>
-                  <div className="time-block-content">
-                    <div className="time-block-name">{entry.courseName}</div>
-                    <div className="time-block-meta">{entry.room} · {entry.instructor}</div>
+                return (
+                  <div className={`time-block ${isActive ? 'active' : ''}`} key={entry.id}>
+                    <div className="time-block-indicator" style={{ background: entry.color || 'var(--accent-primary)' }} />
+                    <div className="time-block-time">{entry.time} – {entry.endTime}</div>
+                    <div className="time-block-content">
+                      <div className="time-block-name">{entry.name || entry.courseName}</div>
+                      <div className="time-block-meta">{entry.room || 'Room 101'} · {entry.instructor || 'Department Faculty'}</div>
+                    </div>
+                    <span className={`time-block-type type-${entry.type || 'lecture'}`}>{entry.type || 'lecture'}</span>
                   </div>
-                  <span className={`time-block-type type-${entry.type}`}>{entry.type}</span>
-                </div>
-              );
-            })}
+                );
+              })
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '28px 16px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                <Clock size={28} style={{ marginBottom: 8, opacity: 0.6 }} />
+                <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.92rem' }}>No lectures scheduled today</div>
+                <div style={{ fontSize: '0.8rem', marginTop: 4 }}>Check your weekly calendar for upcoming course sessions.</div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -541,18 +598,26 @@ function StudentDashboard({ name, stats, studentWellness }: { name: string; stat
             </button>
           </div>
           <div className="notif-quick-list" style={{ flex: 1 }}>
-            {MOCK_NOTIFICATIONS.filter(n => !n.read).slice(0, 3).map((n) => (
-              <div className="notif-quick-item" key={n.id} onClick={() => n.link && router.push(n.link)}>
-                <div className={`notif-icon ${n.type}`}>
-                  {notifIcons[n.type] || '📢'}
+            {notifications && notifications.length > 0 ? (
+              notifications.slice(0, 3).map((n: any) => (
+                <div className="notif-quick-item" key={n.id} onClick={() => n.link && router.push(n.link)}>
+                  <div className={`notif-icon ${n.type || 'system'}`}>
+                    {notifIcons[n.type] || '📢'}
+                  </div>
+                  <div className="notif-content">
+                    <div className="notif-title">{n.title}</div>
+                    <div className="notif-message">{n.message}</div>
+                  </div>
+                  <div className="notif-time">{getRelativeTime(n.createdAt)}</div>
                 </div>
-                <div className="notif-content">
-                  <div className="notif-title">{n.title}</div>
-                  <div className="notif-message">{n.message}</div>
-                </div>
-                <div className="notif-time">{getRelativeTime(n.createdAt)}</div>
+              ))
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', padding: '24px 16px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                <BellIcon size={26} style={{ marginBottom: 8, opacity: 0.6 }} />
+                <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.92rem' }}>All caught up!</div>
+                <div style={{ fontSize: '0.8rem', marginTop: 4 }}>No unread alerts or notifications.</div>
               </div>
-            ))}
+            )}
           </div>
         </div>
 
@@ -629,14 +694,34 @@ function StudentDashboard({ name, stats, studentWellness }: { name: string; stat
 // ═══════════════════════════════════════════════════
 // TEACHER DASHBOARD
 // ═══════════════════════════════════════════════════
-function TeacherDashboard({ name, stats, user, atRiskStudents }: { name: string; stats?: any; user?: any; atRiskStudents?: any[] }) {
+function TeacherDashboard({
+  name,
+  stats,
+  user,
+  atRiskStudents,
+  schedule = [],
+}: {
+  name: string;
+  stats?: any;
+  user?: any;
+  atRiskStudents?: any[];
+  schedule?: any[];
+}) {
   const router = useRouter();
   const [isRiskModalOpen, setIsRiskModalOpen] = useState(false);
-  const teacherStats = stats || MOCK_TEACHER_STATS;
+  const teacherStats = {
+    totalStudents: 0,
+    classesToday: 0,
+    pendingGrading: 0,
+    atRiskCount: 0,
+    averageAttendance: 0,
+    assignmentsCreated: 0,
+    ...stats,
+  };
   const attendanceCircumference = 2 * Math.PI * 70;
   const attendanceOffset = attendanceCircumference * (1 - (teacherStats.averageAttendance || 90) / 100);
   
-  const aiRiskCount = atRiskStudents && atRiskStudents.length > 0 ? atRiskStudents.length : teacherStats.atRiskCount || teacherStats.atRisk || 0;
+  const aiRiskCount = atRiskStudents && atRiskStudents.length > 0 ? atRiskStudents.length : teacherStats.atRiskCount || 0;
 
   return (
     <>
@@ -700,35 +785,43 @@ function TeacherDashboard({ name, stats, user, atRiskStudents }: { name: string;
             </button>
           </div>
           <div style={{ marginTop: 'auto' }}>
-            {MOCK_SCHEDULE_TODAY.map((entry) => (
-              <div className="list-item" key={entry.id}>
-                <div className="list-icon" style={{ background: 'var(--accent-primary)', color: '#000' }}>
-                  <BookOpen size={18} />
+            {schedule && schedule.length > 0 ? (
+              schedule.map((entry: any) => (
+                <div className="list-item" key={entry.id}>
+                  <div className="list-icon" style={{ background: 'var(--accent-primary)', color: '#000' }}>
+                    <BookOpen size={18} />
+                  </div>
+                  <div className="list-content">
+                    <div className="list-title">{entry.name || entry.courseName}</div>
+                    <div className="list-subtitle">{entry.time} - {entry.endTime} • {entry.room || 'Room 101'}</div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div className="list-meta">{entry.courseCode || entry.code}</div>
+                    <button
+                      onClick={() => router.push('/dashboard/attendance')}
+                      style={{
+                        padding: '5px 12px',
+                        borderRadius: 'var(--radius-full)',
+                        background: 'rgba(0,0,0,0.05)',
+                        border: '1px solid var(--border-glass)',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        color: 'var(--text-primary)'
+                      }}
+                    >
+                      Roll Call
+                    </button>
+                  </div>
                 </div>
-                <div className="list-content">
-                  <div className="list-title">{entry.courseName}</div>
-                  <div className="list-subtitle">{entry.time} - {entry.endTime} • {entry.room}</div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div className="list-meta">{entry.courseCode}</div>
-                  <button
-                    onClick={() => router.push('/dashboard/attendance')}
-                    style={{
-                      padding: '5px 12px',
-                      borderRadius: 'var(--radius-full)',
-                      background: 'rgba(0,0,0,0.05)',
-                      border: '1px solid var(--border-glass)',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      color: 'var(--text-primary)'
-                    }}
-                  >
-                    Roll Call
-                  </button>
-                </div>
+              ))
+            ) : (
+              <div style={{ padding: '20px 16px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                <Clock size={24} style={{ marginBottom: 6, opacity: 0.6 }} />
+                <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.88rem' }}>No lectures scheduled today</div>
+                <div style={{ fontSize: '0.78rem', marginTop: 2 }}>All classes conclude or are asynchronous.</div>
               </div>
-            ))}
+            )}
           </div>
         </div>
 
@@ -837,8 +930,18 @@ function TeacherDashboard({ name, stats, user, atRiskStudents }: { name: string;
 function AdminDashboard({ name, stats, user, atRiskStudents }: { name: string; stats?: any; user?: any; atRiskStudents?: any[] }) {
   const router = useRouter();
   const [isFeeModalOpen, setIsFeeModalOpen] = useState(false);
-  const adminStats = stats || MOCK_ADMIN_STATS;
-  const riskList = atRiskStudents && atRiskStudents.length > 0 ? atRiskStudents : MOCK_AT_RISK_STUDENTS;
+  const adminStats = {
+    totalStudents: 0,
+    totalFaculty: 0,
+    activeCourses: 0,
+    attendanceRate: 0,
+    feeCollected: 0,
+    feeOutstanding: 0,
+    atRiskStudents: 0,
+    systemUptime: 99.98,
+    ...stats,
+  };
+  const riskList = atRiskStudents || [];
 
   return (
     <>
@@ -989,7 +1092,7 @@ function AdminDashboard({ name, stats, user, atRiskStudents }: { name: string; s
           </div>
           <div style={{ marginTop: 'auto' }}>
             <div style={{ fontSize: '2.5rem', fontWeight: 600, marginBottom: 6, color: '#10B981' }}>
-              86.4%
+              {adminStats.attendanceRate || 0}%
             </div>
             <div style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginBottom: 16, lineHeight: 1.4 }}>
               Campus-wide average. Configured institutional threshold: <strong>75%</strong>.
@@ -1077,6 +1180,9 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [atRiskStudents, setAtRiskStudents] = useState<any[]>([]);
   const [studentWellness, setStudentWellness] = useState<any>(null);
+  const [assignments, setAssignments] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
 
   useEffect(() => {
     try {
@@ -1088,44 +1194,45 @@ export default function DashboardPage() {
       }
 
       if (token) {
+        const headers = { "Authorization": `Bearer ${token}` };
+
         // Fetch live stats from NestJS backend
-        fetch("http://localhost:3001/academic/dashboard", {
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        })
-        .then(res => res.json())
-        .then(data => {
-          let mergedStats = data;
-          try {
-            const role = JSON.parse(userData || "{}").role;
-            if (role === 'student') mergedStats = { ...MOCK_STUDENT_STATS, ...data };
-            else if (role === 'teacher') mergedStats = { ...MOCK_TEACHER_STATS, ...data };
-            else if (role === 'admin') mergedStats = { ...MOCK_ADMIN_STATS, ...data };
-          } catch(e) {}
-          
-          setStats(mergedStats);
-        })
-        .catch(err => {
-          console.error("Failed to fetch backend stats", err);
-        });
+        fetch("http://localhost:3001/academic/dashboard", { headers })
+          .then(res => res.json())
+          .then(data => setStats(data))
+          .catch(err => console.error("Failed to fetch backend stats", err));
+
+        // Fetch assignments for deadlines
+        fetch("http://localhost:3001/academic/assignments", { headers })
+          .then(res => res.json())
+          .then(data => { if (Array.isArray(data)) setAssignments(data); })
+          .catch(err => console.error("Failed to fetch assignments", err));
+
+        // Fetch notifications
+        fetch("http://localhost:3001/notifications?unreadOnly=true", { headers })
+          .then(res => res.json())
+          .then(data => { if (Array.isArray(data)) setNotifications(data); })
+          .catch(err => console.error("Failed to fetch notifications", err));
+
+        // Fetch courses for schedule
+        fetch("http://localhost:3001/courses", { headers })
+          .then(res => res.json())
+          .then(data => { if (Array.isArray(data)) setCourses(data); })
+          .catch(err => console.error("Failed to fetch courses", err));
 
         // Fetch AI risk predictions if teacher/admin
-        const role = JSON.parse(userData || "{}").role;
+        const parsedUser = JSON.parse(userData || "{}");
+        const role = parsedUser.role;
         if (role === 'teacher' || role === 'admin') {
-          fetch("http://localhost:3001/ai/at-risk", {
-            headers: { "Authorization": `Bearer ${token}` }
-          })
-          .then(res => res.json())
-          .then(data => setAtRiskStudents(data))
-          .catch(err => console.error("Failed to fetch AI risk predictions", err));
+          fetch("http://localhost:3001/ai/at-risk", { headers })
+            .then(res => res.json())
+            .then(data => { if (Array.isArray(data)) setAtRiskStudents(data); })
+            .catch(err => console.error("Failed to fetch AI risk predictions", err));
         } else if (role === 'student') {
-          fetch("http://localhost:3001/ai/student-wellness", {
-            headers: { "Authorization": `Bearer ${token}` }
-          })
-          .then(res => res.json())
-          .then(data => setStudentWellness(data))
-          .catch(err => console.error("Failed to fetch student wellness", err));
+          fetch("http://localhost:3001/ai/student-wellness", { headers })
+            .then(res => res.json())
+            .then(data => setStudentWellness(data))
+            .catch(err => console.error("Failed to fetch student wellness", err));
         }
 
         setIsLoading(false);
@@ -1136,6 +1243,18 @@ export default function DashboardPage() {
       setIsLoading(false);
     }
   }, []);
+
+  const schedule = courses.map((c: any, i: number) => ({
+    id: c.id,
+    name: c.name,
+    courseCode: c.code,
+    room: c.room || `Room ${101 + i}`,
+    instructor: c.instructorName || 'Department Faculty',
+    time: ['09:00', '10:30', '13:00', '14:30'][i % 4] || '10:00',
+    endTime: ['10:15', '11:45', '14:15', '15:45'][i % 4] || '11:00',
+    type: c.code?.includes('L') ? 'lab' : 'lecture',
+    color: ['#6366f1', '#8b5cf6', '#06b6d4', '#10b981'][i % 4],
+  }));
 
   if (!user || isLoading) {
     return (
@@ -1169,11 +1288,35 @@ export default function DashboardPage() {
 
   switch (user.role) {
     case "student":
-      return <StudentDashboard name={user.firstName || user.name || "Student"} stats={stats} studentWellness={studentWellness} />;
+      return (
+        <StudentDashboard
+          name={user.firstName || user.name || "Student"}
+          stats={stats}
+          studentWellness={studentWellness}
+          assignments={assignments}
+          notifications={notifications}
+          schedule={schedule}
+        />
+      );
     case "teacher":
-      return <TeacherDashboard name={user.firstName || user.name || "Professor"} stats={stats} user={user} atRiskStudents={atRiskStudents} />;
+      return (
+        <TeacherDashboard
+          name={user.firstName || user.name || "Professor"}
+          stats={stats}
+          user={user}
+          atRiskStudents={atRiskStudents}
+          schedule={schedule}
+        />
+      );
     case "admin":
-      return <AdminDashboard name={user.firstName || user.name || "Admin"} stats={stats} user={user} atRiskStudents={atRiskStudents} />;
+      return (
+        <AdminDashboard
+          name={user.firstName || user.name || "Admin"}
+          stats={stats}
+          user={user}
+          atRiskStudents={atRiskStudents}
+        />
+      );
     default:
       return <div>Invalid role</div>;
   }

@@ -5,7 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Bell, Settings, Sun, Moon, Check, CheckCheck,
   GraduationCap, CreditCard, AlertTriangle, ArrowRight,
-  ExternalLink, X, ShieldCheck, MessageSquare, Mail, ShieldAlert
+  ExternalLink, X, ShieldCheck, MessageSquare, Mail, ShieldAlert,
+  Menu, Home, BookOpen, LogOut, ChevronRight
 } from "lucide-react";
 import { type Role } from "@/lib/mockData";
 
@@ -48,7 +49,37 @@ export default function Header({ user }: HeaderProps) {
   const [quickNotifs, setQuickNotifs] = useState<NotificationItem[]>([]);
   const [loadingNotifs, setLoadingNotifs] = useState(false);
   const [isBannerDismissed, setIsBannerDismissed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close mobile drawer on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
+
+  // Close mobile drawer or notifications on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsMobileMenuOpen(false);
+        setIsNotifOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Prevent background scrolling while mobile drawer is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobileMenuOpen]);
 
   // Read theme preference on mount
   useEffect(() => {
@@ -229,27 +260,50 @@ export default function Header({ user }: HeaderProps) {
     }
   };
 
-  const navLinks = [
-    { label: "Dashboard", href: "/dashboard" },
-    { label: user.role === "student" ? "Academic Wellness" : "At-Risk AI", href: "/dashboard/at-risk" },
-    { label: "AI Copilot", href: "/dashboard/copilot" },
-    { label: "Courses", href: "/dashboard/courses" },
-    { label: "Resources", href: "/dashboard/resources" },
-    { label: "Calendar", href: "/dashboard/calendar" },
-    { label: "Attendance", href: "/dashboard/attendance" },
-    { label: "Assignments", href: "/dashboard/assignments" },
-    { label: "Exams", href: "/dashboard/exams" },
-    { label: "Reports", href: "/dashboard/reports" },
-    { label: "Grades", href: "/dashboard/grades" },
-    { label: "Fees", href: "/dashboard/fees" },
-    { label: "Announcements", href: "/dashboard/announcements" },
-    { label: "Messages", href: "/dashboard/messages" },
-    { label: "Gamification", href: "/dashboard/gamification" },
-    { label: "Compliance", href: "/dashboard/compliance" },
-    { label: "Data Hub", href: "/dashboard/bulk-data" },
-    { label: "System Config", href: "/dashboard/system-config" },
-    { label: "Evaluations", href: "/dashboard/evaluations" },
+  const navSections = [
+    {
+      category: "Academics",
+      items: [
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Courses", href: "/dashboard/courses" },
+        { label: "Assignments", href: "/dashboard/assignments" },
+        { label: "Exams", href: "/dashboard/exams" },
+        { label: "Grades", href: "/dashboard/grades" },
+        { label: "Attendance", href: "/dashboard/attendance" },
+        { label: "Resources", href: "/dashboard/resources" },
+        { label: "Calendar", href: "/dashboard/calendar" },
+        { label: "Evaluations", href: "/dashboard/evaluations" },
+      ],
+    },
+    {
+      category: "AI & Intelligence",
+      items: [
+        { label: user.role === "student" ? "Academic Wellness" : "At-Risk AI", href: "/dashboard/at-risk" },
+        { label: "AI Copilot", href: "/dashboard/copilot" },
+        { label: "Reports", href: "/dashboard/reports" },
+        { label: "Analytics", href: "/dashboard/analytics" },
+      ],
+    },
+    {
+      category: "Campus & Community",
+      items: [
+        { label: "Messages", href: "/dashboard/messages" },
+        { label: "Announcements", href: "/dashboard/announcements" },
+        { label: "Gamification", href: "/dashboard/gamification" },
+        { label: "Fees & Invoices", href: "/dashboard/fees" },
+      ],
+    },
+    {
+      category: "Administration & Security",
+      items: [
+        { label: "Compliance & FERPA", href: "/dashboard/compliance" },
+        { label: "Data Hub", href: "/dashboard/bulk-data" },
+        { label: "System Config", href: "/dashboard/system-config" },
+      ],
+    },
   ];
+
+  const navLinks = navSections.flatMap((sec) => sec.items);
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
@@ -389,7 +443,7 @@ export default function Header({ user }: HeaderProps) {
 
           {/* Direct Messaging */}
           <button
-            className="icon-btn"
+            className="icon-btn hide-mobile-quick"
             aria-label="Direct Messages"
             title="Direct Messages (Student ↔ Teacher)"
             onClick={() => router.push("/dashboard/messages")}
@@ -399,7 +453,7 @@ export default function Header({ user }: HeaderProps) {
 
           {/* Privacy & Compliance (FERPA / GDPR) */}
           <button
-            className="icon-btn"
+            className="icon-btn hide-mobile-quick"
             aria-label="Data Privacy & Compliance"
             title="Data Privacy & Compliance (FERPA / GDPR)"
             onClick={() => router.push("/dashboard/compliance")}
@@ -409,7 +463,7 @@ export default function Header({ user }: HeaderProps) {
 
           {/* Quick Settings */}
           <button
-            className="icon-btn"
+            className="icon-btn hide-mobile-quick"
             aria-label="Notification Settings"
             title="Notification Settings"
             onClick={() => router.push("/dashboard/notifications")}
@@ -459,7 +513,7 @@ export default function Header({ user }: HeaderProps) {
                 position: "absolute",
                 top: 48,
                 right: 0,
-                width: 380,
+                width: "min(380px, calc(100vw - 32px))",
                 background: "var(--bg-primary)",
                 border: "1px solid var(--border-primary)",
                 borderRadius: 16,
@@ -729,8 +783,143 @@ export default function Header({ user }: HeaderProps) {
               }}
             />
           </div>
+
+          {/* Mobile Menu Toggle Button */}
+          <button
+            className="mobile-menu-toggle"
+            onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+            aria-label={isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            title={isMobileMenuOpen ? "Close menu" : "Open navigation menu"}
+          >
+            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Drawer Backdrop Overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="mobile-drawer-overlay"
+          onClick={() => setIsMobileMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Mobile Slide-Out Drawer */}
+      <aside className={`mobile-drawer ${isMobileMenuOpen ? "open" : ""}`} aria-label="Mobile Navigation Drawer">
+        <div className="mobile-drawer-header">
+          <div className="mobile-drawer-brand">
+            <span className="brand-badge">ScholarPulse</span>
+            <span className="brand-sub">Navigation</span>
+          </div>
+          <button
+            className="mobile-drawer-close"
+            onClick={() => setIsMobileMenuOpen(false)}
+            aria-label="Close menu"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* User Mini Profile Card inside drawer */}
+        <div className="mobile-drawer-user">
+          <div className="drawer-user-avatar">{initials}</div>
+          <div className="drawer-user-info">
+            <div className="drawer-user-name">{user.name}</div>
+            <div className="drawer-user-meta">
+              <span className="role-pill">{user.role}</span>
+              <span className={`verify-pill ${user.isEmailVerified ? "verified" : "unverified"}`}>
+                {user.isEmailVerified ? "Verified" : "Unverified"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Categorized Nav Sections inside drawer */}
+        <nav className="mobile-drawer-nav">
+          {navSections.map((sec) => (
+            <div key={sec.category} className="mobile-drawer-section">
+              <div className="mobile-section-title">{sec.category}</div>
+              <div className="mobile-section-items">
+                {sec.items.map((item) => (
+                  <button
+                    key={item.href}
+                    className={`mobile-nav-link ${isActive(item.href) ? "active" : ""}`}
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      router.push(item.href);
+                    }}
+                  >
+                    <span>{item.label}</span>
+                    <ChevronRight size={16} className="nav-chevron" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </nav>
+
+        {/* Mobile Drawer Footer with theme and signout */}
+        <div className="mobile-drawer-footer">
+          <button className="drawer-action-btn" onClick={toggleTheme}>
+            {isDark ? <Sun size={18} /> : <Moon size={18} />}
+            <span>{isDark ? "Light Mode" : "Dark Mode"}</span>
+          </button>
+          <button className="drawer-action-btn logout" onClick={handleLogout}>
+            <LogOut size={18} />
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Mobile Fixed Bottom Navigation Bar */}
+      <nav className="mobile-bottom-nav" aria-label="Mobile Bottom Navigation">
+        <button
+          className={`mobile-bottom-item ${pathname === "/dashboard" ? "active" : ""}`}
+          onClick={() => router.push("/dashboard")}
+        >
+          <Home size={20} />
+          <span>Home</span>
+        </button>
+
+        <button
+          className={`mobile-bottom-item ${pathname.startsWith("/dashboard/courses") ? "active" : ""}`}
+          onClick={() => router.push("/dashboard/courses")}
+        >
+          <BookOpen size={20} />
+          <span>Courses</span>
+        </button>
+
+        <button
+          className={`mobile-bottom-item ${pathname.startsWith("/dashboard/messages") ? "active" : ""}`}
+          onClick={() => router.push("/dashboard/messages")}
+        >
+          <MessageSquare size={20} />
+          <span>Messages</span>
+        </button>
+
+        <button
+          className={`mobile-bottom-item ${pathname.startsWith("/dashboard/notifications") ? "active" : ""}`}
+          onClick={() => router.push("/dashboard/notifications")}
+          style={{ position: "relative" }}
+        >
+          <Bell size={20} />
+          <span>Alerts</span>
+          {unreadCount > 0 && (
+            <span className="bottom-nav-badge">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
+        </button>
+
+        <button
+          className={`mobile-bottom-item ${isMobileMenuOpen ? "active" : ""}`}
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        >
+          <Menu size={20} />
+          <span>Menu</span>
+        </button>
+      </nav>
       <style jsx global>{`
         @keyframes notifPulse {
           0% { transform: scale(1); }

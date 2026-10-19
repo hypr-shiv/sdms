@@ -125,6 +125,7 @@ export default function AICopilot() {
       {/* Floating Button */}
       {!isOpen && (
         <button
+          className="ai-copilot-trigger"
           onClick={() => setIsOpen(true)}
           style={{
             position: "fixed",
@@ -154,6 +155,7 @@ export default function AICopilot() {
       {/* Chat Window */}
       {isOpen && (
         <div
+          className="ai-copilot-window"
           style={{
             position: "fixed",
             bottom: 24,

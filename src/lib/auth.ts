@@ -1,22 +1,22 @@
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-
-// ─── Constants ───
-const JWT_SECRET = process.env.JWT_SECRET || "fallback_dev_secret";
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "fallback_refresh_secret";
-const SALT_ROUNDS = 10;
-const ACCESS_TOKEN_EXPIRY = "15m";
-const REFRESH_TOKEN_SHORT = "1d";
-const REFRESH_TOKEN_LONG = "7d"; // "Remember Me" expiry
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * SCHOLARPULSE CLIENT AUTHENTICATION UTILITIES
+ * ⚠️ SECURITY POLICY: ZERO API KEYS / SECRETS ON FRONTEND
+ * All password hashing, JWT signing, and signature verification are executed
+ * strictly on the backend (sdms-backend). The client only handles form
+ * validation and safe payload inspection.
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
 
 // ─── Email Validation ───
-export const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+export const EMAIL_REGEX =
+  /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 
 export function isValidEmail(email: string): boolean {
   return EMAIL_REGEX.test(email) && email.length <= 254;
 }
 
-// ─── Password Validation ───
+// ─── Password Requirements Check ───
 export interface PasswordCheck {
   isValid: boolean;
   errors: string[];
@@ -35,52 +35,67 @@ export function validatePassword(password: string): PasswordCheck {
   return { isValid: errors.length === 0, errors };
 }
 
-// ─── Password Hashing ───
-export async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, SALT_ROUNDS);
-}
-
-export async function verifyPassword(
-  password: string,
-  hash: string
-): Promise<boolean> {
-  return bcrypt.compare(password, hash);
-}
-
-// ─── JWT Token Generation ───
+// ─── Client-Side Safe JWT Payload Parser (No Secrets Needed) ───
 export interface TokenPayload {
-  id: string;
-  email: string;
-  role: string;
-  userId: string;
-  name: string;
+  id?: string;
+  sub?: string;
+  email?: string;
+  role?: string;
+  userId?: string;
+  studentId?: string;
+  name?: string;
+  exp?: number;
+  iat?: number;
 }
 
-export function generateAccessToken(payload: TokenPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY });
-}
+/**
+ * Safely parses the claims payload of a JWT for client display without
+ * requiring the server's private JWT_SECRET. Cryptographic signature verification
+ * is performed exclusively by the backend on every API request.
+ */
+export function parseTokenPayload(token: string): TokenPayload | null {
+  if (!token || typeof token !== "string") return null;
 
-export function generateRefreshToken(
-  payload: TokenPayload,
-  rememberMe: boolean = false
-): string {
-  const expiry = rememberMe ? REFRESH_TOKEN_LONG : REFRESH_TOKEN_SHORT;
-  return jwt.sign(payload, JWT_REFRESH_SECRET, { expiresIn: expiry });
-}
-
-// ─── JWT Token Verification ───
-export function verifyAccessToken(token: string): TokenPayload | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as TokenPayload;
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+
+    // Base64URL to Base64
+    const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload =
+      typeof window !== "undefined"
+        ? decodeURIComponent(
+            atob(base64)
+              .split("")
+              .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+              .join("")
+          )
+        : Buffer.from(base64, "base64").toString("utf8");
+
+    return JSON.parse(jsonPayload) as TokenPayload;
   } catch {
     return null;
   }
 }
 
-export function verifyRefreshToken(token: string): TokenPayload | null {
-  try {
-    return jwt.verify(token, JWT_REFRESH_SECRET) as TokenPayload;
-  } catch {
-    return null;
-  }
+/**
+ * Check if the stored JWT is expired based on its client exp timestamp
+ */
+export function isTokenExpired(token: string): boolean {
+  const payload = parseTokenPayload(token);
+  if (!payload || !payload.exp) return true;
+  return Date.now() >= payload.exp * 1000;
+}
+
+/**
+ * Get active session token from browser storage
+ */
+export function getClientAuthToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return (
+    localStorage.getItem("token") ||
+    localStorage.getItem("accessToken") ||
+    sessionStorage.getItem("token") ||
+    sessionStorage.getItem("accessToken")
+  );
 }

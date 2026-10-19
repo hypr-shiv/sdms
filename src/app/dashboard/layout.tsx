@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Header from "@/components/Dashboard/Header";
 import AICopilot from "@/components/AICopilot";
 import type { Role } from "@/lib/mockData";
+import { trackPageView } from "@/lib/telemetry";
 import "./dashboard.css";
 
 interface AuthUser {
@@ -26,6 +27,13 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // ─── Privacy-Preserving Route Telemetry ───
+  useEffect(() => {
+    if (pathname) {
+      trackPageView(pathname);
+    }
+  }, [pathname]);
 
   // ─── Auth Guard: Check token on mount ───
   useEffect(() => {
