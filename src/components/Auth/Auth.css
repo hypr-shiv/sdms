@@ -232,15 +232,107 @@
   }
 }
 
-/* ─── Validation States ─── */
-.input-field.input-error {
-  border-color: rgba(248, 113, 113, 0.65) !important;
-  background: rgba(239, 68, 68, 0.05) !important;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+/* ─── High Contrast White Input Boxes (Authentication & Login Forms) ─── */
+.auth-field-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin-bottom: 6px;
+  letter-spacing: 0.01em;
 }
 
-.input-field.input-valid {
-  border-color: rgba(52, 211, 153, 0.4) !important;
+.auth-card .input-field {
+  width: 100%;
+  padding: 14px 16px 14px 48px;
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 10px !important;
+  font-size: 0.95rem !important;
+  font-weight: 500 !important;
+  font-family: var(--font-sans);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.auth-card .input-field::placeholder {
+  color: #94a3b8 !important;
+  font-weight: 400;
+}
+
+.auth-card .input-field[type="password"] {
+  letter-spacing: 0.18em !important;
+  font-size: 1.15rem !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+}
+
+.auth-card .input-field[type="text"],
+.auth-card .input-field[type="email"] {
+  letter-spacing: normal !important;
+  font-size: 0.95rem !important;
+  font-weight: 500 !important;
+}
+
+.auth-card .input-field:focus {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.25), 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+}
+
+.auth-card .input-field.focus-student:focus {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.25), 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+}
+
+.auth-card .input-field.focus-teacher:focus {
+  border-color: #8b5cf6 !important;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.25), 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+}
+
+.auth-card .input-field.focus-admin:focus {
+  border-color: #ec4899 !important;
+  box-shadow: 0 0 0 4px rgba(236, 72, 153, 0.25), 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+}
+
+.auth-card .input-field.input-error {
+  border-color: #ef4444 !important;
+  background: #fef2f2 !important;
+  color: #991b1b !important;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2) !important;
+}
+
+.auth-card .input-field.input-valid {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18) !important;
+}
+
+/* Left icons inside input containers */
+.auth-card div[style*="position: relative"] > svg:first-child,
+.auth-card div[style*="position: relative"] > svg[style*="left: 16"] {
+  color: #64748b !important;
+  transition: color 0.2s ease;
+  z-index: 2;
+}
+
+.auth-card div[style*="position: relative"]:focus-within > svg:first-child,
+.auth-card div[style*="position: relative"]:focus-within > svg[style*="left: 16"] {
+  color: #4f46e5 !important;
+}
+
+/* Password Eye Toggle */
+.auth-card .password-toggle {
+  color: #64748b !important;
+  z-index: 2;
+}
+
+.auth-card .password-toggle:hover {
+  color: #0f172a !important;
 }
 
 .input-valid-icon {
@@ -248,12 +340,13 @@
   right: 16px;
   top: 50%;
   transform: translateY(-50%);
-  color: #34d399;
+  color: #10b981 !important;
   pointer-events: none;
   display: flex;
   align-items: center;
   justify-content: center;
   animation: fadeIn 0.2s ease forwards;
+  z-index: 2;
 }
 
 .field-error {

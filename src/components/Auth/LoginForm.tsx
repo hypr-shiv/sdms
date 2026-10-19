@@ -527,6 +527,9 @@ export default function LoginForm({
       <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         {/* User ID Field */}
         <div>
+          <label htmlFor="login-userId" className="auth-field-label">
+            {config.idLabel}
+          </label>
           <div style={{ position: "relative" }}>
             <IdCard
               size={18}
@@ -535,9 +538,9 @@ export default function LoginForm({
                 left: 16,
                 top: "50%",
                 transform: "translateY(-50%)",
-                color: "var(--text-muted)",
+                color: "#64748b",
                 pointerEvents: "none",
-                zIndex: 1,
+                zIndex: 2,
               }}
             />
             <input
@@ -564,6 +567,9 @@ export default function LoginForm({
 
         {/* Email Field */}
         <div>
+          <label htmlFor="login-email" className="auth-field-label">
+            Institutional Email
+          </label>
           <div style={{ position: "relative" }}>
             <Mail
               size={18}
@@ -572,16 +578,16 @@ export default function LoginForm({
                 left: 16,
                 top: "50%",
                 transform: "translateY(-50%)",
-                color: "var(--text-muted)",
+                color: "#64748b",
                 pointerEvents: "none",
-                zIndex: 1,
+                zIndex: 2,
               }}
             />
             <input
               id="login-email"
               type="email"
               className={`input-field ${config.focusClass} ${emailError ? "input-error" : email && !emailError ? "input-valid" : ""}`}
-              placeholder="Email address"
+              placeholder="e.g. name@scholarpulse.edu"
               value={email}
               onChange={handleEmailChange}
               onBlur={handleEmailBlur}
@@ -601,6 +607,26 @@ export default function LoginForm({
 
         {/* Password Field */}
         <div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+            <label htmlFor="login-password" className="auth-field-label" style={{ margin: 0 }}>
+              Password
+            </label>
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#818cf8",
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                cursor: "pointer",
+                padding: "0 2px"
+              }}
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
+          </div>
           <div style={{ position: "relative" }}>
             <Lock
               size={18}
@@ -609,16 +635,16 @@ export default function LoginForm({
                 left: 16,
                 top: "50%",
                 transform: "translateY(-50%)",
-                color: "var(--text-muted)",
+                color: "#64748b",
                 pointerEvents: "none",
-                zIndex: 1,
+                zIndex: 2,
               }}
             />
             <input
               id="login-password"
               type={showPassword ? "text" : "password"}
               className={`input-field ${config.focusClass} ${passwordError ? "input-error" : ""}`}
-              placeholder="Password"
+              placeholder="Enter your password"
               value={password}
               onChange={handlePasswordChange}
               onBlur={handlePasswordBlur}
