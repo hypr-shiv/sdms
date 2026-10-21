@@ -330,14 +330,21 @@ export default function SignUpForm({ onSwitchToLogin, onRoleChange, onSwitchToVe
           }),
         });
 
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         if (!res.ok) {
+          const rawMsg =
+            typeof data.message === "string"
+              ? data.message
+              : Array.isArray(data.message)
+              ? data.message[0]
+              : data.error || (res.status === 500 ? "Server error during registration. Please try again." : "Sign up failed. Please check your information.");
+
           if (res.status === 429) {
             const retry = Number(data.retryAfter || res.headers.get("Retry-After")) || 60;
             setRateLimitCooldown(retry);
-            setGlobalError(data.message || `Too many requests. Please wait ${retry}s.`);
+            setGlobalError(rawMsg);
           } else {
-            setGlobalError(data.message || "Sign up failed");
+            setGlobalError(rawMsg);
           }
           return;
         }

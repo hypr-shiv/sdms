@@ -224,7 +224,7 @@ export default function LoginForm({
           body: JSON.stringify({ email: cleanEmail, password }),
         });
 
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
 
         if (!res.ok) {
           const rawMsg =
