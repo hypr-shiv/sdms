@@ -9,8 +9,9 @@
  * and server-sent events using the user's ephemeral session bearer token.
  */
 
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+export const API_BASE_URL = (
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"
+).replace(/\/+$/, "");
 
 /**
  * Build a full API URL given a route path

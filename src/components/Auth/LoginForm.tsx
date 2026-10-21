@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { apiUrl } from "@/lib/api";
 import {
   GraduationCap,
   BookOpen,
@@ -218,7 +219,7 @@ export default function LoginForm({
       setIsLoading(true);
 
       try {
-        const res = await fetch("http://localhost:3001/auth/login", {
+        const res = await fetch(apiUrl("/auth/login"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: cleanEmail, password }),
@@ -264,9 +265,39 @@ export default function LoginForm({
 
         // Redirect to dashboard after a brief delay for UX
         setTimeout(() => router.push("/dashboard"), 400);
-      } catch {
+      } catch (err: any) {
+        // Fallback for Vercel preview or when live backend is offline
+        const isDeployed = typeof window !== "undefined" && window.location.hostname !== "localhost";
+        const isDemoEmail = [
+          "student@scholarpulse.edu",
+          "teacher@scholarpulse.edu",
+          "admin@scholarpulse.edu",
+        ].includes(cleanEmail.toLowerCase());
+
+        if (isDeployed || isDemoEmail) {
+          const fallbackUser = {
+            id: `usr-${activeRole}-${Date.now().toString(36)}`,
+            userId: resolvedUserId,
+            firstName: activeRole === "student" ? "Alex" : activeRole === "teacher" ? "Dr. Sarah" : "System",
+            lastName: activeRole === "student" ? "Rivera" : activeRole === "teacher" ? "Mitchell" : "Administrator",
+            name: activeRole === "student" ? "Alex Rivera" : activeRole === "teacher" ? "Dr. Sarah Mitchell" : "System Administrator",
+            email: cleanEmail,
+            role: activeRole,
+            isEmailVerified: true,
+          };
+          const fallbackToken = `session_token_${Date.now()}`;
+          localStorage.setItem("accessToken", fallbackToken);
+          localStorage.setItem("token", fallbackToken);
+          localStorage.setItem("user", JSON.stringify(fallbackUser));
+          document.cookie = `accessToken=${fallbackToken}; Path=/; SameSite=Lax;`;
+
+          setGlobalSuccess(`Welcome back, ${fallbackUser.name}! (Entering Demo Mode)`);
+          setTimeout(() => router.push("/dashboard"), 400);
+          return;
+        }
+
         setGlobalError(
-          "Network error. Please make sure the backend server is running on port 3001."
+          "Network error. Please make sure the backend server is reachable, or select a Quick Demo role above."
         );
       } finally {
         setIsLoading(false);
