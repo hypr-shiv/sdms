@@ -290,7 +290,7 @@ export default function Header({ user }: HeaderProps) {
         { label: "Messages", href: "/dashboard/messages" },
         { label: "Announcements", href: "/dashboard/announcements" },
         { label: "Gamification", href: "/dashboard/gamification" },
-        { label: "Fees & Invoices", href: "/dashboard/fees" },
+        { label: "Fees & Payment Portal", href: "/dashboard/fees" },
       ],
     },
     {
@@ -303,7 +303,44 @@ export default function Header({ user }: HeaderProps) {
     },
   ];
 
-  const navLinks = navSections.flatMap((sec) => sec.items);
+  // Role-optimized primary navbar links for immediate visibility
+  const primaryStudentLinks = [
+    { label: "Dashboard", href: "/dashboard" },
+    { label: "Courses", href: "/dashboard/courses" },
+    { label: "Assignments", href: "/dashboard/assignments" },
+    { label: "Grades", href: "/dashboard/grades" },
+    { label: "Attendance", href: "/dashboard/attendance" },
+    { label: "💳 Fees & Payment", href: "/dashboard/fees" },
+    { label: "Exams", href: "/dashboard/exams" },
+    { label: "Messages", href: "/dashboard/messages" },
+  ];
+
+  const primaryTeacherLinks = [
+    { label: "Dashboard", href: "/dashboard" },
+    { label: "Courses", href: "/dashboard/courses" },
+    { label: "Assignments", href: "/dashboard/assignments" },
+    { label: "Attendance", href: "/dashboard/attendance" },
+    { label: "Exams", href: "/dashboard/exams" },
+    { label: "Student Wellness", href: "/dashboard/at-risk" },
+    { label: "Messages", href: "/dashboard/messages" },
+  ];
+
+  const primaryAdminLinks = [
+    { label: "Dashboard", href: "/dashboard" },
+    { label: "Fees & Finance", href: "/dashboard/fees" },
+    { label: "Analytics", href: "/dashboard/analytics" },
+    { label: "System Config", href: "/dashboard/system-config" },
+    { label: "Compliance", href: "/dashboard/compliance" },
+    { label: "Audit Logs", href: "/dashboard/audit" },
+    { label: "Messages", href: "/dashboard/messages" },
+  ];
+
+  const navLinks =
+    user.role === "student"
+      ? primaryStudentLinks
+      : user.role === "teacher"
+      ? primaryTeacherLinks
+      : primaryAdminLinks;
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
@@ -450,6 +487,19 @@ export default function Header({ user }: HeaderProps) {
           >
             <MessageSquare size={20} strokeWidth={1.5} />
           </button>
+
+          {/* Quick Tuition & Fees Payment for Students */}
+          {user.role === "student" && (
+            <button
+              className="icon-btn hide-mobile-quick"
+              aria-label="Tuition Fees & Payments"
+              title="Tuition Fees & Online Payment"
+              onClick={() => router.push("/dashboard/fees")}
+              style={{ color: "var(--accent-primary, #6366f1)" }}
+            >
+              <CreditCard size={20} strokeWidth={1.5} />
+            </button>
+          )}
 
           {/* Privacy & Compliance (FERPA / GDPR) */}
           <button

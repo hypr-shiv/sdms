@@ -29,6 +29,31 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: '/fees',
+        destination: '/dashboard/fees',
+        permanent: true,
+      },
+      {
+        source: '/payment',
+        destination: '/dashboard/fees',
+        permanent: true,
+      },
+      {
+        source: '/payments',
+        destination: '/dashboard/fees',
+        permanent: true,
+      },
+      {
+        source: '/dashboard/payment',
+        destination: '/dashboard/fees',
+        permanent: true,
+      },
+      {
+        source: '/dashboard/payments',
+        destination: '/dashboard/fees',
+        permanent: true,
+      },
+      {
         source: '/settings',
         destination: '/dashboard/settings',
         permanent: true,

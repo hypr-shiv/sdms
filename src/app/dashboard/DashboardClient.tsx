@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowUpRight, Check, AlertCircle, BookOpen, TrendingUp, Clock, GraduationCap, Bell as BellIcon, FileText, ClipboardList, HeartHandshake, Sparkles, ShieldCheck } from "lucide-react";
+import { ArrowUpRight, Check, AlertCircle, BookOpen, TrendingUp, Clock, GraduationCap, Bell as BellIcon, FileText, ClipboardList, HeartHandshake, Sparkles, ShieldCheck, CreditCard } from "lucide-react";
 import { type Role } from "@/lib/mockData";
 import Modal from "@/components/Modal";
 
@@ -199,6 +199,17 @@ function StudentDashboard({
               <span className="progress-label">Streak</span>
               <div className="progress-pill pill-dark" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 🔥 {studentStats.streak || 14} days
+              </div>
+            </div>
+            <div
+              className="progress-item"
+              onClick={() => router.push('/dashboard/fees')}
+              style={{ cursor: 'pointer' }}
+              title="Click to view and pay tuition fees"
+            >
+              <span className="progress-label">Tuition Due</span>
+              <div className="progress-pill" style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', fontWeight: 600 }}>
+                💳 $3,000.00
               </div>
             </div>
           </div>
@@ -622,7 +633,7 @@ function StudentDashboard({
         </div>
 
         {/* ── Exams & Online Assessments Card (FR-EXAM) ── */}
-        <div className="card card-enter" style={{ animationDelay: '0.35s' }}>
+        <div className="card card-span-col-2 card-enter" style={{ animationDelay: '0.35s' }}>
           <div className="card-header">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(99, 102, 241, 0.12)', color: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -656,6 +667,104 @@ function StudentDashboard({
                 style={{ padding: '8px 12px', background: 'rgba(0,0,0,0.04)', border: '1px solid var(--border-glass)', borderRadius: 8, fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer' }}
               >
                 Marksheets
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Tuition & Fees / Payment Portal Card ── */}
+        <div className="card card-span-col-2 card-enter" style={{ animationDelay: '0.4s' }}>
+          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(16, 185, 129, 0.12)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <CreditCard size={18} />
+              </div>
+              <div>
+                <h3 className="card-title" style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>Tuition & Payments</h3>
+                <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>Spring 2026 Semester Billing</span>
+              </div>
+            </div>
+            <button
+              className="card-action-btn"
+              onClick={() => router.push('/dashboard/fees')}
+              title="Open Payment Portal"
+            >
+              <ArrowUpRight size={16} strokeWidth={2} />
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, flex: 1, justifyContent: 'space-between', marginTop: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+              <div>
+                <span style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>Outstanding Balance</span>
+                <div style={{ fontSize: '1.65rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+                  $3,000<span style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', fontWeight: 500 }}>.00</span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 400, marginLeft: 8 }}>
+                    of $4,500 total
+                  </span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: 700, padding: '3px 10px', borderRadius: 9999, background: 'rgba(239, 68, 68, 0.12)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.25)' }}>
+                  Due Nov 15, 2026
+                </span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 4 }}>
+                  Installment 2 of 3
+                </span>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', color: 'var(--text-secondary)', marginBottom: 6 }}>
+                <span>Paid: $1,500.00 (33%)</span>
+                <span>Remaining: $3,000.00</span>
+              </div>
+              <div style={{ width: '100%', height: 7, background: 'var(--border-glass, rgba(0,0,0,0.06))', borderRadius: 9999, overflow: 'hidden' }}>
+                <div style={{ width: '33.33%', height: '100%', background: 'linear-gradient(90deg, #10b981, #059669)', borderRadius: 9999 }} />
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 4 }}>
+              <button
+                onClick={() => router.push('/dashboard/fees')}
+                style={{
+                  padding: '9px 14px',
+                  background: 'var(--accent-primary)',
+                  color: '#000',
+                  border: 'none',
+                  borderRadius: 10,
+                  fontWeight: 700,
+                  fontSize: '0.82rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+                }}
+              >
+                <CreditCard size={15} /> Pay Fees Now
+              </button>
+              <button
+                onClick={() => router.push('/dashboard/fees')}
+                style={{
+                  padding: '9px 14px',
+                  background: 'rgba(0,0,0,0.04)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--border-glass)',
+                  borderRadius: 10,
+                  fontWeight: 600,
+                  fontSize: '0.82rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6
+                }}
+              >
+                Invoices & Receipts
               </button>
             </div>
           </div>
